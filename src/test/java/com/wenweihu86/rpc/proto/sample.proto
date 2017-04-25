@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package api;
-option java_package = "com.wenweihu86.rpc.server.proto";
+option java_package = "com.wenweihu86.rpc.proto";
 option java_outer_classname = "Sample";
 
 message SampleRequest {

@@ -61,7 +61,8 @@ public class WorkHandler {
             Class requestClass = serviceInfo.getRequestClass();
             try {
                 Method decodeMethod = requestClass.getMethod("parseFrom", byte[].class);
-                GeneratedMessageV3 protoRequest = (GeneratedMessageV3) decodeMethod.invoke(requestClass, request.getBody());
+                GeneratedMessageV3 protoRequest = (GeneratedMessageV3) decodeMethod.invoke(
+                        requestClass, request.getBody());
                 GeneratedMessageV3 protoResponse =
                         (GeneratedMessageV3) serviceInfo.getMethod().invoke(serviceInfo.getService(), protoRequest);
                 Method encodeMethod = protoResponse.getClass().getMethod("toByteArray");
@@ -69,10 +70,13 @@ public class WorkHandler {
                 ProtoV3Response response = new ProtoV3Response();
                 ProtoV3Header.ResponseHeader responseHeader = ProtoV3Header.ResponseHeader.newBuilder()
                         .setLogId(requestHeader.getLogId())
-                        .setResCode("")
+                        .setResCode(0)
                         .setResMsg("").build();
                 response.setHeader(responseHeader);
                 response.setBody(responseBody);
+                LOG.info("service={} method={} logId={} request={} response={}",
+                        serviceName, methodName, requestHeader.getLogId(),
+                        protoRequest.toString(), protoResponse.toString());
                 ctx.channel().writeAndFlush(response);
             } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage());

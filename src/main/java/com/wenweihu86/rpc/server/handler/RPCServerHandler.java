@@ -25,7 +25,7 @@ public class RPCServerHandler extends SimpleChannelInboundHandler<ProtoV3Request
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         ProtoV3Response response = new ProtoV3Response();
         ProtoV3Header.ResponseHeader header = ProtoV3Header.ResponseHeader.newBuilder()
-                .setResCode("").setResMsg(cause.getMessage()).build();
+                .setResCode(-1).setResMsg(cause.getMessage()).build();
         response.setHeader(header);
         response.setBody(new byte[]{});
         ctx.fireChannelRead(response);

@@ -20,6 +20,6 @@ message RequestHeader {
 
 message ResponseHeader {
     string logId = 1;
-    string resCode = 2;
+    int32 resCode = 2;
     string resMsg = 3;
 }

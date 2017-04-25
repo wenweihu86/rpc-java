@@ -1142,14 +1142,9 @@ public final class ProtoV3Header {
         getLogIdBytes();
 
     /**
-     * <code>optional string resCode = 2;</code>
+     * <code>optional int32 resCode = 2;</code>
      */
-    java.lang.String getResCode();
-    /**
-     * <code>optional string resCode = 2;</code>
-     */
-    com.google.protobuf.ByteString
-        getResCodeBytes();
+    int getResCode();
 
     /**
      * <code>optional string resMsg = 3;</code>
@@ -1174,7 +1169,7 @@ public final class ProtoV3Header {
     }
     private ResponseHeader() {
       logId_ = "";
-      resCode_ = "";
+      resCode_ = 0;
       resMsg_ = "";
     }
 
@@ -1209,10 +1204,9 @@ public final class ProtoV3Header {
               logId_ = s;
               break;
             }
-            case 18: {
-              java.lang.String s = input.readStringRequireUtf8();
+            case 16: {
 
-              resCode_ = s;
+              resCode_ = input.readInt32();
               break;
             }
             case 26: {
@@ -1279,37 +1273,12 @@ public final class ProtoV3Header {
     }
 
     public static final int RESCODE_FIELD_NUMBER = 2;
-    private volatile java.lang.Object resCode_;
+    private int resCode_;
     /**
-     * <code>optional string resCode = 2;</code>
+     * <code>optional int32 resCode = 2;</code>
      */
-    public java.lang.String getResCode() {
-      java.lang.Object ref = resCode_;
-      if (ref instanceof java.lang.String) {
-        return (java.lang.String) ref;
-      } else {
-        com.google.protobuf.ByteString bs = 
-            (com.google.protobuf.ByteString) ref;
-        java.lang.String s = bs.toStringUtf8();
-        resCode_ = s;
-        return s;
-      }
-    }
-    /**
-     * <code>optional string resCode = 2;</code>
-     */
-    public com.google.protobuf.ByteString
-        getResCodeBytes() {
-      java.lang.Object ref = resCode_;
-      if (ref instanceof java.lang.String) {
-        com.google.protobuf.ByteString b = 
-            com.google.protobuf.ByteString.copyFromUtf8(
-                (java.lang.String) ref);
-        resCode_ = b;
-        return b;
-      } else {
-        return (com.google.protobuf.ByteString) ref;
-      }
+    public int getResCode() {
+      return resCode_;
     }
 
     public static final int RESMSG_FIELD_NUMBER = 3;
@@ -1361,8 +1330,8 @@ public final class ProtoV3Header {
       if (!getLogIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, logId_);
       }
-      if (!getResCodeBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, resCode_);
+      if (resCode_ != 0) {
+        output.writeInt32(2, resCode_);
       }
       if (!getResMsgBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, resMsg_);
@@ -1377,8 +1346,9 @@ public final class ProtoV3Header {
       if (!getLogIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, logId_);
       }
-      if (!getResCodeBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, resCode_);
+      if (resCode_ != 0) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeInt32Size(2, resCode_);
       }
       if (!getResMsgBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, resMsg_);
@@ -1401,8 +1371,8 @@ public final class ProtoV3Header {
       boolean result = true;
       result = result && getLogId()
           .equals(other.getLogId());
-      result = result && getResCode()
-          .equals(other.getResCode());
+      result = result && (getResCode()
+          == other.getResCode());
       result = result && getResMsg()
           .equals(other.getResMsg());
       return result;
@@ -1418,7 +1388,7 @@ public final class ProtoV3Header {
       hash = (37 * hash) + LOGID_FIELD_NUMBER;
       hash = (53 * hash) + getLogId().hashCode();
       hash = (37 * hash) + RESCODE_FIELD_NUMBER;
-      hash = (53 * hash) + getResCode().hashCode();
+      hash = (53 * hash) + getResCode();
       hash = (37 * hash) + RESMSG_FIELD_NUMBER;
       hash = (53 * hash) + getResMsg().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -1541,7 +1511,7 @@ public final class ProtoV3Header {
         super.clear();
         logId_ = "";
 
-        resCode_ = "";
+        resCode_ = 0;
 
         resMsg_ = "";
 
@@ -1615,9 +1585,8 @@ public final class ProtoV3Header {
           logId_ = other.logId_;
           onChanged();
         }
-        if (!other.getResCode().isEmpty()) {
-          resCode_ = other.resCode_;
-          onChanged();
+        if (other.getResCode() != 0) {
+          setResCode(other.getResCode());
         }
         if (!other.getResMsg().isEmpty()) {
           resMsg_ = other.resMsg_;
@@ -1718,71 +1687,28 @@ public final class ProtoV3Header {
         return this;
       }
 
-      private java.lang.Object resCode_ = "";
+      private int resCode_ ;
       /**
-       * <code>optional string resCode = 2;</code>
+       * <code>optional int32 resCode = 2;</code>
        */
-      public java.lang.String getResCode() {
-        java.lang.Object ref = resCode_;
-        if (!(ref instanceof java.lang.String)) {
-          com.google.protobuf.ByteString bs =
-              (com.google.protobuf.ByteString) ref;
-          java.lang.String s = bs.toStringUtf8();
-          resCode_ = s;
-          return s;
-        } else {
-          return (java.lang.String) ref;
-        }
+      public int getResCode() {
+        return resCode_;
       }
       /**
-       * <code>optional string resCode = 2;</code>
+       * <code>optional int32 resCode = 2;</code>
        */
-      public com.google.protobuf.ByteString
-          getResCodeBytes() {
-        java.lang.Object ref = resCode_;
-        if (ref instanceof String) {
-          com.google.protobuf.ByteString b = 
-              com.google.protobuf.ByteString.copyFromUtf8(
-                  (java.lang.String) ref);
-          resCode_ = b;
-          return b;
-        } else {
-          return (com.google.protobuf.ByteString) ref;
-        }
-      }
-      /**
-       * <code>optional string resCode = 2;</code>
-       */
-      public Builder setResCode(
-          java.lang.String value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  
+      public Builder setResCode(int value) {
+        
         resCode_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional string resCode = 2;</code>
+       * <code>optional int32 resCode = 2;</code>
        */
       public Builder clearResCode() {
         
-        resCode_ = getDefaultInstance().getResCode();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional string resCode = 2;</code>
-       */
-      public Builder setResCodeBytes(
-          com.google.protobuf.ByteString value) {
-        if (value == null) {
-    throw new NullPointerException();
-  }
-  checkByteStringIsUtf8(value);
-        
-        resCode_ = value;
+        resCode_ = 0;
         onChanged();
         return this;
       }
@@ -1928,7 +1854,7 @@ public final class ProtoV3Header {
       "ame\030\002 \001(\t\022\r\n\005logId\030\003 \001(\t\022*\n\014compressType" +
       "\030\004 \001(\0162\024.proto3.CompressType\022\023\n\013customPa" +
       "ram\030\005 \001(\t\"@\n\016ResponseHeader\022\r\n\005logId\030\001 \001" +
-      "(\t\022\017\n\007resCode\030\002 \001(\t\022\016\n\006resMsg\030\003 \001(\t*H\n\014C" +
+      "(\t\022\017\n\007resCode\030\002 \001(\005\022\016\n\006resMsg\030\003 \001(\t*H\n\014C" +
       "ompressType\022\017\n\013COMPRESS_NO\020\000\022\023\n\017COMPRESS" +
       "_SNAPPY\020\001\022\022\n\016COMPERESS_GZIP\020\002B0\n\037com.wen" +
       "weihu86.rpc.codec.proto3B\rProtoV3Headerb" +
