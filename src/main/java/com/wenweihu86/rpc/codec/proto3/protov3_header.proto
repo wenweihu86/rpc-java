@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package proto3;
+option java_package = "com.wenweihu86.rpc.codec.proto3";
+option java_outer_classname = "ProtoV3Header";
+
+enum CompressType {
+    COMPRESS_NO = 0;
+    COMPRESS_SNAPPY =1;
+    COMPERESS_GZIP = 2;
+}
+
+message RequestHeader {
+    string serviceName = 1;
+    string methodName = 2;
+    string logId = 3;
+    CompressType compressType = 4;
+    string customParam = 5;
+}
+
+message ResponseHeader {
+    string logId = 1;
+    string resCode = 2;
+    string resMsg = 3;
+}

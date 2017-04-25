@@ -1,0 +1,15 @@
+*.swp
+*.swo
+target
+.classpath
+.project
+.settings
+.svn
+output
+.idea
+*.iml
+*.pyc
+logs/
+*MANIFEST
+*artifacts
+.DS_Store
