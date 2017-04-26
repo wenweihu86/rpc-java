@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Decoder;
@@ -30,15 +32,15 @@ public class RPCClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCClient.class);
 
+    private static AtomicBoolean isInit = new AtomicBoolean(false);
     private static RPCClientOption rpcClientOption;
     private static Bootstrap bootstrap;
-    private static AtomicBoolean isInit = new AtomicBoolean(false);
+    private static Map<String, RPCFuture> pendingRPC;
+    private static ScheduledExecutorService scheduledExecutor;
 
     private String host;
     private int port;
-
     private Channel channel;
-    private static Map<String, RPCFuture> pendingRPC;
 
     public RPCClient(String host, int port) {
         this(host, port, null);
@@ -46,12 +48,14 @@ public class RPCClient {
 
     public RPCClient(String host, int port, RPCClientOption option) {
         if (isInit.compareAndSet(false, true)) {
+            pendingRPC = new ConcurrentHashMap<>();
+            scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+
             if (option != null) {
                 this.rpcClientOption = option;
             } else {
                 this.rpcClientOption = new RPCClientOption();
             }
-            pendingRPC = new ConcurrentHashMap<>();
 
             bootstrap = new Bootstrap();
             bootstrap.channel(NioSocketChannel.class);
@@ -101,18 +105,6 @@ public class RPCClient {
         }
     }
 
-    public static void addRPCFuture(String logId, RPCFuture future) {
-        pendingRPC.put(logId, future);
-    }
-
-    public static RPCFuture getRPCFuture(String logId) {
-        return pendingRPC.get(logId);
-    }
-
-    public static void removeRPCFuture(String logId) {
-        pendingRPC.remove(logId);
-    }
-
     public void sendRequest(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
         if (this.channel == null || !this.channel.isActive()) {
             try {
@@ -129,6 +121,22 @@ public class RPCClient {
             LOG.error("connect to {}:{} failed", this.host, this.port);
             throw new RuntimeException("connect failed");
         }
+    }
+
+    public static void addRPCFuture(String logId, RPCFuture future) {
+        pendingRPC.put(logId, future);
+    }
+
+    public static RPCFuture getRPCFuture(String logId) {
+        return pendingRPC.get(logId);
+    }
+
+    public static RPCFuture removeRPCFuture(String logId) {
+        return pendingRPC.remove(logId);
+    }
+
+    public static ScheduledExecutorService getScheduledExecutor() {
+        return scheduledExecutor;
     }
 
     public static RPCClientOption getRpcClientOption() {

@@ -22,11 +22,11 @@ public class RPCServerChannelIdleHandler extends ChannelDuplexHandler {
             IdleStateEvent e = (IdleStateEvent) event;
             if (e.state() == IdleState.ALL_IDLE) {
                 // if no read and write for period time, close current channel
-                LOG.warn("channel={} ip={} is idle for period time, close now.",
+                LOG.debug("channel={} ip={} is idle for period time, close now.",
                         ctx.channel(), ctx.channel().remoteAddress());
                 ctx.close();
             } else {
-                LOG.warn("idle on channel[{}]:{}", e.state(), ctx.channel());
+                LOG.debug("idle on channel[{}]:{}", e.state(), ctx.channel());
             }
         }
     }

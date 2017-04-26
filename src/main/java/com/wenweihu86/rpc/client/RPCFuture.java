@@ -1,93 +1,73 @@
 package com.wenweihu86.rpc.client;
 
 import com.google.protobuf.GeneratedMessageV3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class RPCFuture implements Future<GeneratedMessageV3>, RPCCallback<GeneratedMessageV3> {
+public class RPCFuture {
 
-    private final CountDownLatch latch = new CountDownLatch(1);
+    private static final Logger LOG = LoggerFactory.getLogger(RPCFuture.class);
 
+    private CountDownLatch latch;
+    private ScheduledFuture scheduledFuture;
     private Class responseClass;
-    private GeneratedMessageV3 result;
+    private GeneratedMessageV3 response;
 
     private Throwable error;
 
-    public RPCFuture(Class responseClass) {
+    public RPCFuture(ScheduledFuture scheduledFuture, Class responseClass) {
+        this.scheduledFuture = scheduledFuture;
         this.responseClass = responseClass;
+        this.latch = new CountDownLatch(1);
     }
 
-    @Override
-    public void success(GeneratedMessageV3 result) {
-        this.result = result;
+    public void success(GeneratedMessageV3 response) {
+        this.response = response;
+        scheduledFuture.cancel(true);
         latch.countDown();
     }
 
-    @Override
     public void fail(Throwable error) {
         this.error = error;
+        scheduledFuture.cancel(true);
         latch.countDown();
     }
 
-    public GeneratedMessageV3 getResult() {
-        return result;
+    public void timeout() {
+        this.response = null;
+        latch.countDown();
     }
 
-    public Throwable getError() {
-        return error;
-    }
-
-    @Override
     public GeneratedMessageV3 get() throws InterruptedException {
         latch.await();
         if (error != null) {
-            throw new RuntimeException("Error occurrs due to " + error.getMessage(), error);
+            LOG.warn("error occurs due to {}", error.getMessage());
+            return null;
         }
-        return result;
+        return response;
     }
 
-    @Override
     public GeneratedMessageV3 get(long timeout, TimeUnit unit) {
         try {
             if (latch.await(timeout, unit)) {
                 if (error != null) {
-                    throw new RuntimeException("Error occurrs due to " + error.getMessage(), error);
+                    LOG.warn("error occurrs due to {}", error.getMessage());
+                    return null;
                 }
-                return result;
+                return response;
             } else {
-                throw new RuntimeException("CallFuture async get time out");
+                LOG.warn("sync call time out");
+                return null;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new RuntimeException("CallFuture is interuptted", e);
+            LOG.warn("sync call is interrupted, {}", e);
+            return null;
         }
-    }
-
-    public void await() throws InterruptedException {
-        latch.await();
-    }
-
-    public void await(long timeout, TimeUnit unit) throws InterruptedException {
-        if (!latch.await(timeout, unit)) {
-            throw new RuntimeException("timeout");
-        }
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        return false;
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return false;
-    }
-
-    @Override
-    public boolean isDone() {
-        return latch.getCount() <= 0;
     }
 
     public Class getResponseClass() {

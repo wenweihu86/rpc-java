@@ -48,6 +48,8 @@ public class WorkHandler {
 
         @Override
         public void run() {
+            long startTime = System.currentTimeMillis();
+
             ProtoV3Header.RequestHeader requestHeader = request.getHeader();
             String serviceName = requestHeader.getServiceName();
             String methodName = requestHeader.getMethodName();
@@ -69,14 +71,16 @@ public class WorkHandler {
                 ProtoV3Message<ProtoV3Header.ResponseHeader> response = new ProtoV3Message<>();
                 ProtoV3Header.ResponseHeader responseHeader = ProtoV3Header.ResponseHeader.newBuilder()
                         .setLogId(requestHeader.getLogId())
-                        .setResCode(0)
+                        .setResCode(ProtoV3Header.ResCode.RES_SUCCESS)
                         .setResMsg("").build();
                 response.setHeader(responseHeader);
                 response.setBody(responseBody);
-                LOG.info("service={} method={} logId={} request={} response={}",
-                        serviceName, methodName, requestHeader.getLogId(),
-                        protoRequest.toString(), protoResponse.toString());
                 ctx.channel().writeAndFlush(response);
+
+                long endTime = System.currentTimeMillis();
+                LOG.info("elapse={}ms service={} method={} logId={} request={} response={}",
+                        endTime - startTime, serviceName, methodName, requestHeader.getLogId(),
+                        protoRequest.toString(), protoResponse.toString());
             } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage());
             }

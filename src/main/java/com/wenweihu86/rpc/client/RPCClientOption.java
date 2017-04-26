@@ -21,9 +21,6 @@ public class RPCClientOption {
 
     private boolean reuseAddr = true;
 
-    // 字节顺序
-    private ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
-
     private boolean tcpNoDelay = true;
 
     // so linger
@@ -38,23 +35,6 @@ public class RPCClientOption {
     // send buffer size
     private int sendBufferSize = 1024 * 64;
 
-    /**
-     * an {@link IdleStateEvent} whose state is {@link IdleState#READER_IDLE}
-     * will be triggered when no read was performed for the specified period of time.
-     * Specify {@code 0} to disable.
-     */
-    private int readerIdleTime = 60;
-
-    /**
-     * an {@link IdleStateEvent} whose state is {@link IdleState#WRITER_IDLE}
-     * will be triggered when no write was performed for the specified period of time.
-     * Specify {@code 0} to disable.
-     */
-    private int writerIdleTime = 60;
-
-    // connect timeout, in milliseconds
-    private int connectTimeout;
-
     // keepAlive时间（second）
     private int keepAliveTime;
 
@@ -63,9 +43,6 @@ public class RPCClientOption {
 
     // io threads, default use Netty default value
     private int ioThreadNum = 0;
-
-    // real work threads
-    private int workThreadNum = Runtime.getRuntime().availableProcessors() * 2;
 
     // The max size
     private int maxSize = Integer.MAX_VALUE;
@@ -110,14 +87,6 @@ public class RPCClientOption {
         this.reuseAddr = reuseAddr;
     }
 
-    public ByteOrder getByteOrder() {
-        return byteOrder;
-    }
-
-    public void setByteOrder(ByteOrder byteOrder) {
-        this.byteOrder = byteOrder;
-    }
-
     public boolean isTCPNoDelay() {
         return tcpNoDelay;
     }
@@ -158,22 +127,6 @@ public class RPCClientOption {
         this.sendBufferSize = sendBufferSize;
     }
 
-    public int getReaderIdleTime() {
-        return readerIdleTime;
-    }
-
-    public void setReaderIdleTime(int readerIdleTime) {
-        this.readerIdleTime = readerIdleTime;
-    }
-
-    public int getWriterIdleTime() {
-        return writerIdleTime;
-    }
-
-    public void setWriterIdleTime(int writerIdleTime) {
-        this.writerIdleTime = writerIdleTime;
-    }
-
     public int getKeepAliveTime() {
         return keepAliveTime;
     }
@@ -196,14 +149,6 @@ public class RPCClientOption {
 
     public void setIOThreadNum(int ioThreadNum) {
         this.ioThreadNum = ioThreadNum;
-    }
-
-    public int getWorkThreadNum() {
-        return workThreadNum;
-    }
-
-    public void setWorkThreadNum(int workThreadNum) {
-        this.workThreadNum = workThreadNum;
     }
 
     public int getMaxSize() {

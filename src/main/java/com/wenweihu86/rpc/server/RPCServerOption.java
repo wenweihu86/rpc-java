@@ -13,9 +13,6 @@ public class RPCServerOption {
     // The keep alive
     private boolean keepAlive;
 
-    // 字节顺序
-    private ByteOrder byteOrder = ByteOrder.BIG_ENDIAN;
-
     private boolean tcpNoDelay = true;
 
     // so linger
@@ -44,9 +41,6 @@ public class RPCServerOption {
      */
     private int writerIdleTime = 60;
 
-    // connect timeout, in milliseconds
-    private int connectTimeout;
-
     // keepAlive时间（second）
     private int keepAliveTime;
 
@@ -68,14 +62,6 @@ public class RPCServerOption {
 
     public void setKeepAlive(boolean keepAlive) {
         this.keepAlive = keepAlive;
-    }
-
-    public ByteOrder getByteOrder() {
-        return byteOrder;
-    }
-
-    public void setByteOrder(ByteOrder byteOrder) {
-        this.byteOrder = byteOrder;
     }
 
     public boolean isTCPNoDelay() {
@@ -132,14 +118,6 @@ public class RPCServerOption {
 
     public void setWriterIdleTime(int writerIdleTime) {
         this.writerIdleTime = writerIdleTime;
-    }
-
-    public int getConnectTimeout() {
-        return connectTimeout;
-    }
-
-    public void setConnectTimeout(int connectTimeout) {
-        this.connectTimeout = connectTimeout;
     }
 
     public int getKeepAliveTime() {

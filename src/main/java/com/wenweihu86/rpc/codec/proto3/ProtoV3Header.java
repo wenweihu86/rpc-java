@@ -121,6 +121,104 @@ public final class ProtoV3Header {
     // @@protoc_insertion_point(enum_scope:proto3.CompressType)
   }
 
+  /**
+   * Protobuf enum {@code proto3.ResCode}
+   */
+  public enum ResCode
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <code>RES_SUCCESS = 0;</code>
+     */
+    RES_SUCCESS(0),
+    /**
+     * <code>RES_FAIL = 1;</code>
+     */
+    RES_FAIL(1),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <code>RES_SUCCESS = 0;</code>
+     */
+    public static final int RES_SUCCESS_VALUE = 0;
+    /**
+     * <code>RES_FAIL = 1;</code>
+     */
+    public static final int RES_FAIL_VALUE = 1;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static ResCode valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static ResCode forNumber(int value) {
+      switch (value) {
+        case 0: return RES_SUCCESS;
+        case 1: return RES_FAIL;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<ResCode>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        ResCode> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<ResCode>() {
+            public ResCode findValueByNumber(int number) {
+              return ResCode.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return com.wenweihu86.rpc.codec.proto3.ProtoV3Header.getDescriptor().getEnumTypes().get(1);
+    }
+
+    private static final ResCode[] VALUES = values();
+
+    public static ResCode valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private ResCode(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:proto3.ResCode)
+  }
+
   public interface RequestHeaderOrBuilder extends
       // @@protoc_insertion_point(interface_extends:proto3.RequestHeader)
       com.google.protobuf.MessageOrBuilder {
@@ -1142,9 +1240,13 @@ public final class ProtoV3Header {
         getLogIdBytes();
 
     /**
-     * <code>optional int32 resCode = 2;</code>
+     * <code>optional .proto3.ResCode resCode = 2;</code>
      */
-    int getResCode();
+    int getResCodeValue();
+    /**
+     * <code>optional .proto3.ResCode resCode = 2;</code>
+     */
+    com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode getResCode();
 
     /**
      * <code>optional string resMsg = 3;</code>
@@ -1205,8 +1307,9 @@ public final class ProtoV3Header {
               break;
             }
             case 16: {
+              int rawValue = input.readEnum();
 
-              resCode_ = input.readInt32();
+              resCode_ = rawValue;
               break;
             }
             case 26: {
@@ -1275,10 +1378,17 @@ public final class ProtoV3Header {
     public static final int RESCODE_FIELD_NUMBER = 2;
     private int resCode_;
     /**
-     * <code>optional int32 resCode = 2;</code>
+     * <code>optional .proto3.ResCode resCode = 2;</code>
      */
-    public int getResCode() {
+    public int getResCodeValue() {
       return resCode_;
+    }
+    /**
+     * <code>optional .proto3.ResCode resCode = 2;</code>
+     */
+    public com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode getResCode() {
+      com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode result = com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode.valueOf(resCode_);
+      return result == null ? com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode.UNRECOGNIZED : result;
     }
 
     public static final int RESMSG_FIELD_NUMBER = 3;
@@ -1330,8 +1440,8 @@ public final class ProtoV3Header {
       if (!getLogIdBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 1, logId_);
       }
-      if (resCode_ != 0) {
-        output.writeInt32(2, resCode_);
+      if (resCode_ != com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode.RES_SUCCESS.getNumber()) {
+        output.writeEnum(2, resCode_);
       }
       if (!getResMsgBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 3, resMsg_);
@@ -1346,9 +1456,9 @@ public final class ProtoV3Header {
       if (!getLogIdBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, logId_);
       }
-      if (resCode_ != 0) {
+      if (resCode_ != com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode.RES_SUCCESS.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, resCode_);
+          .computeEnumSize(2, resCode_);
       }
       if (!getResMsgBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, resMsg_);
@@ -1371,8 +1481,7 @@ public final class ProtoV3Header {
       boolean result = true;
       result = result && getLogId()
           .equals(other.getLogId());
-      result = result && (getResCode()
-          == other.getResCode());
+      result = result && resCode_ == other.resCode_;
       result = result && getResMsg()
           .equals(other.getResMsg());
       return result;
@@ -1388,7 +1497,7 @@ public final class ProtoV3Header {
       hash = (37 * hash) + LOGID_FIELD_NUMBER;
       hash = (53 * hash) + getLogId().hashCode();
       hash = (37 * hash) + RESCODE_FIELD_NUMBER;
-      hash = (53 * hash) + getResCode();
+      hash = (53 * hash) + resCode_;
       hash = (37 * hash) + RESMSG_FIELD_NUMBER;
       hash = (53 * hash) + getResMsg().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
@@ -1585,8 +1694,8 @@ public final class ProtoV3Header {
           logId_ = other.logId_;
           onChanged();
         }
-        if (other.getResCode() != 0) {
-          setResCode(other.getResCode());
+        if (other.resCode_ != 0) {
+          setResCodeValue(other.getResCodeValue());
         }
         if (!other.getResMsg().isEmpty()) {
           resMsg_ = other.resMsg_;
@@ -1687,24 +1796,42 @@ public final class ProtoV3Header {
         return this;
       }
 
-      private int resCode_ ;
+      private int resCode_ = 0;
       /**
-       * <code>optional int32 resCode = 2;</code>
+       * <code>optional .proto3.ResCode resCode = 2;</code>
        */
-      public int getResCode() {
+      public int getResCodeValue() {
         return resCode_;
       }
       /**
-       * <code>optional int32 resCode = 2;</code>
+       * <code>optional .proto3.ResCode resCode = 2;</code>
        */
-      public Builder setResCode(int value) {
-        
+      public Builder setResCodeValue(int value) {
         resCode_ = value;
         onChanged();
         return this;
       }
       /**
-       * <code>optional int32 resCode = 2;</code>
+       * <code>optional .proto3.ResCode resCode = 2;</code>
+       */
+      public com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode getResCode() {
+        com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode result = com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode.valueOf(resCode_);
+        return result == null ? com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode.UNRECOGNIZED : result;
+      }
+      /**
+       * <code>optional .proto3.ResCode resCode = 2;</code>
+       */
+      public Builder setResCode(com.wenweihu86.rpc.codec.proto3.ProtoV3Header.ResCode value) {
+        if (value == null) {
+          throw new NullPointerException();
+        }
+        
+        resCode_ = value.getNumber();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional .proto3.ResCode resCode = 2;</code>
        */
       public Builder clearResCode() {
         
@@ -1853,12 +1980,13 @@ public final class ProtoV3Header {
       "stHeader\022\023\n\013serviceName\030\001 \001(\t\022\022\n\nmethodN" +
       "ame\030\002 \001(\t\022\r\n\005logId\030\003 \001(\t\022*\n\014compressType" +
       "\030\004 \001(\0162\024.proto3.CompressType\022\023\n\013customPa" +
-      "ram\030\005 \001(\t\"@\n\016ResponseHeader\022\r\n\005logId\030\001 \001" +
-      "(\t\022\017\n\007resCode\030\002 \001(\005\022\016\n\006resMsg\030\003 \001(\t*H\n\014C" +
-      "ompressType\022\017\n\013COMPRESS_NO\020\000\022\023\n\017COMPRESS" +
-      "_SNAPPY\020\001\022\022\n\016COMPERESS_GZIP\020\002B0\n\037com.wen" +
-      "weihu86.rpc.codec.proto3B\rProtoV3Headerb" +
-      "\006proto3"
+      "ram\030\005 \001(\t\"Q\n\016ResponseHeader\022\r\n\005logId\030\001 \001" +
+      "(\t\022 \n\007resCode\030\002 \001(\0162\017.proto3.ResCode\022\016\n\006" +
+      "resMsg\030\003 \001(\t*H\n\014CompressType\022\017\n\013COMPRESS" +
+      "_NO\020\000\022\023\n\017COMPRESS_SNAPPY\020\001\022\022\n\016COMPERESS_" +
+      "GZIP\020\002*(\n\007ResCode\022\017\n\013RES_SUCCESS\020\000\022\014\n\010RE" +
+      "S_FAIL\020\001B0\n\037com.wenweihu86.rpc.codec.pro",
+      "to3B\rProtoV3Headerb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {

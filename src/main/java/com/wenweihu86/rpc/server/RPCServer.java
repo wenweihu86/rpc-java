@@ -73,7 +73,6 @@ public class RPCServer {
         bootstrap.childOption(ChannelOption.SO_REUSEADDR, true);
         bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
         bootstrap.childOption(ChannelOption.SO_LINGER, rpcServerOption.getSoLinger());
-        bootstrap.childOption(ChannelOption.CONNECT_TIMEOUT_MILLIS, rpcServerOption.getConnectTimeout());
         bootstrap.childOption(ChannelOption.SO_SNDBUF, rpcServerOption.getSendBufferSize());
         bootstrap.childOption(ChannelOption.SO_RCVBUF, rpcServerOption.getReceiveBufferSize());
 
@@ -92,8 +91,6 @@ public class RPCServer {
             }
         };
         bootstrap.group(bossGroup, workerGroup).childHandler(initializer);
-
-        LOG.info("server init done");
     }
 
     public void registerService(Object service) {
@@ -119,13 +116,12 @@ public class RPCServer {
 
     public void start() {
         WorkHandler.init();
-        LOG.info("server is about to start on port " + port);
         try {
             bootstrap.bind(port).sync();
         } catch (InterruptedException e) {
             LOG.error("server failed to start, {}", e.getMessage());
         }
-        LOG.info("server started");
+        LOG.info("server started on port={} success", port);
     }
 
     public void shutdown() {

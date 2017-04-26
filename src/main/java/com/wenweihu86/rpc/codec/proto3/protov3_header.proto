@@ -10,6 +10,11 @@ enum CompressType {
     COMPERESS_GZIP = 2;
 }
 
+enum ResCode {
+    RES_SUCCESS = 0;
+    RES_FAIL = 1;
+}
+
 message RequestHeader {
     string serviceName = 1;
     string methodName = 2;
@@ -20,6 +25,6 @@ message RequestHeader {
 
 message ResponseHeader {
     string logId = 1;
-    int32 resCode = 2;
+    ResCode resCode = 2;
     string resMsg = 3;
 }

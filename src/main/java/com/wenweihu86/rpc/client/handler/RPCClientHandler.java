@@ -22,14 +22,19 @@ public class RPCClientHandler extends SimpleChannelInboundHandler<ProtoV3Message
         String logId = response.getHeader().getLogId();
         RPCFuture future = RPCClient.getRPCFuture(logId);
         if (future == null) {
-            LOG.warn("Receive msg from server but no request found, logId={}", logId);
+            LOG.warn("receive msg from server but no request found, logId={}", logId);
             return;
         }
         RPCClient.removeRPCFuture(logId);
-        Method decodeMethod = future.getResponseClass().getMethod("parseFrom", byte[].class);
-        GeneratedMessageV3 responseBody = (GeneratedMessageV3) decodeMethod.invoke(
-                future.getResponseClass(), response.getBody());
-        future.success(responseBody);
+
+        if (response.getHeader().getResCode() == ProtoV3Header.ResCode.RES_SUCCESS) {
+            Method decodeMethod = future.getResponseClass().getMethod("parseFrom", byte[].class);
+            GeneratedMessageV3 responseBody = (GeneratedMessageV3) decodeMethod.invoke(
+                    future.getResponseClass(), response.getBody());
+            future.success(responseBody);
+        } else {
+            future.fail(new RuntimeException(response.getHeader().getResMsg()));
+        }
     }
 
     @Override
