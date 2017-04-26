@@ -17,6 +17,8 @@ public class RPCClientTest {
         Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
                 .setA(1)
                 .setB("hello").build();
+
+        // sync request
         Sample.SampleResponse response = sampleService.sampleRPC(request);
         if (response != null) {
             System.out.printf("service=SampleService.sampleRPC, request=%s response=%s",
@@ -24,5 +26,22 @@ public class RPCClientTest {
         } else {
             System.out.println("server error, service=SampleService.sampleRPC");
         }
+
+        // async request
+        RPCCallback callback = new RPCCallback<Sample.SampleResponse>() {
+            @Override
+            public void success(Sample.SampleResponse response) {
+                System.out.printf("async call SampleService.sampleRPC success, response=%s\n",
+                        response.toString());
+            }
+
+            @Override
+            public void fail(Throwable e) {
+                System.out.printf("async call SampleService.sampleRPC failed, %s\n", e.getMessage());
+            }
+        };
+        rpcClient.asyncCall(
+                "SampleService.sampleRPC",
+                request, Sample.SampleResponse.class, callback);
     }
 }

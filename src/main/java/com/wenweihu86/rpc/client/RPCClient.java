@@ -1,5 +1,6 @@
 package com.wenweihu86.rpc.client;
 
+import com.google.protobuf.GeneratedMessageV3;
 import com.wenweihu86.rpc.client.handler.RPCClientHandler;
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
@@ -15,15 +16,17 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.UUID;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Decoder;
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Encoder;
+
+import javax.security.auth.callback.Callback;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -105,7 +108,77 @@ public class RPCClient {
         }
     }
 
-    public void sendRequest(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
+    public void asyncCall(String serviceMethodName,
+                          Object request,
+                          Class responseClass,
+                          RPCCallback callback) {
+        String[] splitArray = serviceMethodName.split("\\.");
+        if (splitArray.length != 2) {
+            LOG.error("serviceMethodName={} is not valid", serviceMethodName);
+            return;
+        }
+        String serviceName = splitArray[0];
+        String methodName = splitArray[1];
+        final String logId = UUID.randomUUID().toString();
+        this.sendRequest(logId, serviceName, methodName, request, responseClass, callback);
+    }
+
+    public RPCFuture sendRequest(final String logId,
+                            final String serviceName,
+                            final String methodName,
+                            Object request,
+                            Class responseClass,
+                            RPCCallback callback) {
+        ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest = new ProtoV3Message<>();
+
+        ProtoV3Header.RequestHeader.Builder headerBuilder = ProtoV3Header.RequestHeader.newBuilder();
+        headerBuilder.setLogId(logId);
+        headerBuilder.setServiceName(serviceName);
+        headerBuilder.setMethodName(methodName);
+        fullRequest.setHeader(headerBuilder.build());
+
+        if (!GeneratedMessageV3.class.isAssignableFrom(request.getClass())) {
+            LOG.error("request must be protobuf message");
+            return null;
+        }
+        try {
+            Method encodeMethod = request.getClass().getMethod("toByteArray");
+            byte[] bodyBytes = (byte[]) encodeMethod.invoke(request);
+            fullRequest.setBody(bodyBytes);
+        } catch (Exception ex) {
+            LOG.error("request object has no method toByteArray");
+            return null;
+        }
+
+        final ScheduledExecutorService scheduledExecutor = RPCClient.getScheduledExecutor();
+        final long readWriteTimeout = RPCClient.getRpcClientOption().getReadTimeoutMillis()
+                + RPCClient.getRpcClientOption().getWriteTimeoutMillis();
+        ScheduledFuture scheduledFuture = scheduledExecutor.schedule(new Runnable() {
+            @Override
+            public void run() {
+                RPCFuture rpcFuture = RPCClient.removeRPCFuture(logId);
+                if (rpcFuture != null) {
+                    LOG.warn("request timeout, logId={}, service={}, method={}",
+                            logId, serviceName, methodName);
+                    rpcFuture.timeout();
+                } else {
+                    LOG.warn("request logId={} not found", logId);
+                }
+            }
+        }, readWriteTimeout, TimeUnit.MILLISECONDS);
+
+        RPCFuture future = new RPCFuture(scheduledFuture, responseClass, callback);
+        RPCClient.addRPCFuture(logId, future);
+        try {
+            this.doSend(fullRequest);
+        } catch (RuntimeException ex) {
+            RPCClient.removeRPCFuture(logId);
+            return null;
+        }
+        return future;
+    }
+
+    public void doSend(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
         if (this.channel == null || !this.channel.isActive()) {
             try {
                 connect();

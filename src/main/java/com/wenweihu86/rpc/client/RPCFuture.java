@@ -16,12 +16,16 @@ public class RPCFuture {
     private ScheduledFuture scheduledFuture;
     private Class responseClass;
     private GeneratedMessageV3 response;
+    private RPCCallback callback;
 
     private Throwable error;
 
-    public RPCFuture(ScheduledFuture scheduledFuture, Class responseClass) {
+    public RPCFuture(ScheduledFuture scheduledFuture,
+                     Class responseClass,
+                     RPCCallback callback) {
         this.scheduledFuture = scheduledFuture;
         this.responseClass = responseClass;
+        this.callback = callback;
         this.latch = new CountDownLatch(1);
     }
 
@@ -29,17 +33,26 @@ public class RPCFuture {
         this.response = response;
         scheduledFuture.cancel(true);
         latch.countDown();
+        if (callback != null) {
+            callback.success(response);
+        }
     }
 
     public void fail(Throwable error) {
         this.error = error;
         scheduledFuture.cancel(true);
         latch.countDown();
+        if (callback != null) {
+            callback.fail(error);
+        }
     }
 
     public void timeout() {
         this.response = null;
         latch.countDown();
+        if (callback != null) {
+            callback.fail(new RuntimeException("timeout"));
+        }
     }
 
     public GeneratedMessageV3 get() throws InterruptedException {

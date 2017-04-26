@@ -38,44 +38,14 @@ public class RPCProxy implements MethodInterceptor {
                             MethodProxy proxy) throws Throwable {
         long startTime = System.currentTimeMillis();
 
-        ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest = new ProtoV3Message<>();
-
-        ProtoV3Header.RequestHeader.Builder headerBuilder = ProtoV3Header.RequestHeader.newBuilder();
         final String logId = UUID.randomUUID().toString();
-        headerBuilder.setLogId(logId);
         final String serviceName = method.getDeclaringClass().getSimpleName();
-        headerBuilder.setServiceName(serviceName);
         final String methodName = method.getName();
-        headerBuilder.setMethodName(methodName);
-        fullRequest.setHeader(headerBuilder.build());
+        RPCFuture future = rpcClient.sendRequest(
+                logId, serviceName, methodName,
+                args[0], method.getReturnType(), null);
 
-        Method encodeMethod = args[0].getClass().getMethod("toByteArray");
-        byte[] bodyBytes = (byte[]) encodeMethod.invoke(args[0]);
-        fullRequest.setBody(bodyBytes);
-
-        final ScheduledExecutorService scheduledExecutor = RPCClient.getScheduledExecutor();
-        final long readWriteTimeout = RPCClient.getRpcClientOption().getReadTimeoutMillis()
-                + RPCClient.getRpcClientOption().getWriteTimeoutMillis();
-        ScheduledFuture scheduledFuture = scheduledExecutor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                RPCFuture rpcFuture = RPCClient.removeRPCFuture(logId);
-                if (rpcFuture != null) {
-                    LOG.warn("request timeout, logId={}, service={}, method={}",
-                            logId, serviceName, methodName);
-                    rpcFuture.timeout();
-                } else {
-                    LOG.warn("request logId={} not found", logId);
-                }
-            }
-        }, readWriteTimeout, TimeUnit.MILLISECONDS);
-
-        RPCFuture future = new RPCFuture(scheduledFuture, method.getReturnType());
-        RPCClient.addRPCFuture(logId, future);
-        try {
-            rpcClient.sendRequest(fullRequest);
-        } catch (RuntimeException ex) {
-            RPCClient.removeRPCFuture(logId);
+        if (future == null) {
             return null;
         }
         Object response = future.get(
