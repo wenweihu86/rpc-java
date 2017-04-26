@@ -1,7 +1,7 @@
 package com.wenweihu86.rpc.client;
 
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Request;
+import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -30,7 +30,7 @@ public class RPCProxy implements MethodInterceptor {
 
     public Object intercept(Object obj, Method method, Object[] args,
                             MethodProxy proxy) throws Throwable {
-        ProtoV3Request fullRequest = new ProtoV3Request();
+        ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest = new ProtoV3Message<>();
 
         ProtoV3Header.RequestHeader.Builder headerBuilder = ProtoV3Header.RequestHeader.newBuilder();
         String logId = UUID.randomUUID().toString();
@@ -45,7 +45,12 @@ public class RPCProxy implements MethodInterceptor {
 
         RPCFuture future = new RPCFuture(method.getReturnType());
         RPCClient.addRPCFuture(logId, future);
-        rpcClient.sendRequest(fullRequest);
+        try {
+            rpcClient.sendRequest(fullRequest);
+        } catch (RuntimeException ex) {
+            RPCClient.removeRPCFuture(logId);
+            return null;
+        }
 
         Object response = future.get(
                 RPCClient.getRpcClientOption().getReadTimeoutMillis(),

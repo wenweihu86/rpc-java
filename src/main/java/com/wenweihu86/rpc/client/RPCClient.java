@@ -1,6 +1,8 @@
 package com.wenweihu86.rpc.client;
 
 import com.wenweihu86.rpc.client.handler.RPCClientHandler;
+import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
+import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -20,7 +22,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Decoder;
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Encoder;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Request;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -64,8 +65,8 @@ public class RPCClient {
             ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new ProtoV3Encoder());
-                    ch.pipeline().addLast(new ProtoV3Decoder());
+                    ch.pipeline().addLast(new ProtoV3Encoder<ProtoV3Header.RequestHeader>());
+                    ch.pipeline().addLast(new ProtoV3Decoder(false));
                     ch.pipeline().addLast(new RPCClientHandler());
                 }
             };
@@ -74,18 +75,19 @@ public class RPCClient {
 
         this.host = host;
         this.port = port;
-
+        connect();
     }
 
     public ChannelFuture connect() {
         try {
             final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port));
+            future.awaitUninterruptibly();
+            this.channel = future.channel();
             future.addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture channelFuture) throws Exception {
                     if (channelFuture.isSuccess()) {
                         LOG.info("Connection {} is established", channelFuture.channel());
-                        channel = future.channel();
                     } else {
                         LOG.warn(String.format("Connection get failed on {} due to {}",
                                 channelFuture.cause().getMessage(), channelFuture.cause()));
@@ -111,17 +113,22 @@ public class RPCClient {
         pendingRPC.remove(logId);
     }
 
-    public void sendRequest(ProtoV3Request fullRequest) {
+    public void sendRequest(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
         if (this.channel == null || !this.channel.isActive()) {
             try {
-                ChannelFuture channelFuture = connect().sync();
-                this.channel = channelFuture.channel();
+                connect();
             } catch (Exception ex) {
                 LOG.error("connect to {}:{} failed", this.host, this.port);
                 throw new RuntimeException("connect failed");
             }
         }
-        this.channel.writeAndFlush(fullRequest);
+        LOG.debug("channel isActive={}", this.channel.isActive());
+        if (this.channel.isActive()) {
+            this.channel.writeAndFlush(fullRequest);
+        } else {
+            LOG.error("connect to {}:{} failed", this.host, this.port);
+            throw new RuntimeException("connect failed");
+        }
     }
 
     public static RPCClientOption getRpcClientOption() {

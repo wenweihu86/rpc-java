@@ -13,6 +13,12 @@ public class ProtoV3Decoder extends ByteToMessageDecoder {
 
     public static final int FIXED_LEN = 8;
 
+    private boolean isRequest;
+
+    public ProtoV3Decoder(boolean isRequest) {
+        this.isRequest = isRequest;
+    }
+
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         // 解决半包问题，此时头部8字节长度还没有接收全，channel中留存的字节流不做处理
@@ -33,11 +39,19 @@ public class ProtoV3Decoder extends ByteToMessageDecoder {
         byte[] bodyBytes = new byte[bodyLen];
         in.readBytes(bodyBytes, 0, bodyLen);
 
-        ProtoV3Request request = new ProtoV3Request();
-        ProtoV3Header.RequestHeader header = ProtoV3Header.RequestHeader.parseFrom(headBytes);
-        request.setHeader(header);
-        request.setBody(bodyBytes);
-
-        out.add(request);
+        if (isRequest) {
+            ProtoV3Message<ProtoV3Header.RequestHeader> object = new ProtoV3Message<>();
+            ProtoV3Header.RequestHeader header = ProtoV3Header.RequestHeader.parseFrom(headBytes);
+            object.setHeader(header);
+            object.setBody(bodyBytes);
+            out.add(object);
+        } else  {
+            ProtoV3Message<ProtoV3Header.ResponseHeader> object = new ProtoV3Message<>();
+            ProtoV3Header.ResponseHeader header = ProtoV3Header.ResponseHeader.parseFrom(headBytes);
+            object.setHeader(header);
+            object.setBody(bodyBytes);
+            out.add(object);
+        }
     }
+
 }

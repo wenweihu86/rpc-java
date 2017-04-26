@@ -2,6 +2,7 @@ package com.wenweihu86.rpc.server;
 
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Decoder;
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Encoder;
+import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
 import com.wenweihu86.rpc.server.handler.RPCServerHandler;
 import com.wenweihu86.rpc.server.handler.RPCServerChannelIdleHandler;
 import com.wenweihu86.rpc.server.handler.WorkHandler;
@@ -85,9 +86,9 @@ public class RPCServer {
                                 rpcServerOption.getWriterIdleTime(),
                                 rpcServerOption.getKeepAliveTime()));
                 ch.pipeline().addLast("idle", new RPCServerChannelIdleHandler());
-                ch.pipeline().addLast("decoder", new ProtoV3Decoder());
+                ch.pipeline().addLast("decoder", new ProtoV3Decoder(true));
                 ch.pipeline().addLast("handler", new RPCServerHandler());
-                ch.pipeline().addLast("encoder", new ProtoV3Encoder());
+                ch.pipeline().addLast("encoder", new ProtoV3Encoder<ProtoV3Header.ResponseHeader>());
             }
         };
         bootstrap.group(bossGroup, workerGroup).childHandler(initializer);

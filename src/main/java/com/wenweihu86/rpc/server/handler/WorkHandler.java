@@ -2,8 +2,7 @@ package com.wenweihu86.rpc.server.handler;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Request;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Response;
+import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
 import com.wenweihu86.rpc.server.RPCServer;
 import com.wenweihu86.rpc.server.ServiceInfo;
 import com.wenweihu86.rpc.server.ServiceManager;
@@ -39,10 +38,10 @@ public class WorkHandler {
     }
 
     public static class WorkTask implements Runnable {
-        private ProtoV3Request request;
+        private ProtoV3Message<ProtoV3Header.RequestHeader> request;
         private ChannelHandlerContext ctx;
 
-        public WorkTask(ChannelHandlerContext ctx, ProtoV3Request request) {
+        public WorkTask(ChannelHandlerContext ctx, ProtoV3Message<ProtoV3Header.RequestHeader> request) {
             this.request = request;
             this.ctx = ctx;
         }
@@ -67,7 +66,7 @@ public class WorkHandler {
                         (GeneratedMessageV3) serviceInfo.getMethod().invoke(serviceInfo.getService(), protoRequest);
                 Method encodeMethod = protoResponse.getClass().getMethod("toByteArray");
                 byte[] responseBody = (byte[]) encodeMethod.invoke(protoResponse);
-                ProtoV3Response response = new ProtoV3Response();
+                ProtoV3Message<ProtoV3Header.ResponseHeader> response = new ProtoV3Message<>();
                 ProtoV3Header.ResponseHeader responseHeader = ProtoV3Header.ResponseHeader.newBuilder()
                         .setLogId(requestHeader.getLogId())
                         .setResCode(0)

@@ -3,23 +3,22 @@ package com.wenweihu86.rpc.client.handler;
 import com.google.protobuf.GeneratedMessageV3;
 import com.wenweihu86.rpc.client.RPCClient;
 import com.wenweihu86.rpc.client.RPCFuture;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Request;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Response;
+import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
+import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class RPCClientHandler extends SimpleChannelInboundHandler<ProtoV3Response> {
+public class RPCClientHandler extends SimpleChannelInboundHandler<ProtoV3Message<ProtoV3Header.ResponseHeader>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCClientHandler.class);
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, ProtoV3Response response) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx,
+                             ProtoV3Message<ProtoV3Header.ResponseHeader> response) throws Exception {
         String logId = response.getHeader().getLogId();
         RPCFuture future = RPCClient.getRPCFuture(logId);
         if (future == null) {

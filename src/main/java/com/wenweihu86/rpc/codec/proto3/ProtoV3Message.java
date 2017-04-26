@@ -1,19 +1,20 @@
 package com.wenweihu86.rpc.codec.proto3;
 
+import com.google.protobuf.GeneratedMessageV3;
+
 /**
- * Created by baidu on 2017/4/25.
+ * Created by wenweihu86 on 2017/4/26.
  */
-public class ProtoV3Response {
+public class ProtoV3Message<T extends GeneratedMessageV3> {
 
-    private ProtoV3Header.ResponseHeader header;
-
+    private T header;
     private byte[] body;
 
-    public ProtoV3Header.ResponseHeader getHeader() {
+    public T getHeader() {
         return header;
     }
 
-    public void setHeader(ProtoV3Header.ResponseHeader header) {
+    public void setHeader(T header) {
         this.header = header;
     }
 
