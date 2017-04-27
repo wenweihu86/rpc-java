@@ -5,7 +5,11 @@ package com.wenweihu86.rpc.server;
  */
 public class RPCServerTest {
     public static void main(String[] args) {
-        RPCServer rpcServer = new RPCServer(8766);
+        int port = 8766;
+        if (args.length == 1) {
+            port = Integer.valueOf(args[0]);
+        }
+        RPCServer rpcServer = new RPCServer(port);
         rpcServer.registerService(new SampleServiceImpl());
         rpcServer.start();
     }

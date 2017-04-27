@@ -18,9 +18,13 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.wenweihu86.rpc.codec.ProtoV3Decoder;
@@ -39,70 +43,31 @@ public class RPCClient {
     private static Map<String, RPCFuture> pendingRPC;
     private static ScheduledExecutorService scheduledExecutor;
 
-    private String host;
-    private int port;
-    private Channel channel;
+    private List<Connection> connectionList;
 
-    public RPCClient(String host, int port) {
-        this(host, port, null);
+    public RPCClient(String ipPorts) {
+        this(ipPorts, null);
     }
 
-    public RPCClient(String host, int port, RPCClientOption option) {
-        if (isInit.compareAndSet(false, true)) {
-            pendingRPC = new ConcurrentHashMap<>();
-            scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
-
-            if (option != null) {
-                this.rpcClientOption = option;
-            } else {
-                this.rpcClientOption = new RPCClientOption();
-            }
-
-            bootstrap = new Bootstrap();
-            bootstrap.channel(NioSocketChannel.class);
-            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, this.rpcClientOption.getConnectTimeoutMillis());
-            bootstrap.option(ChannelOption.SO_KEEPALIVE, this.rpcClientOption.isKeepAlive());
-            bootstrap.option(ChannelOption.SO_REUSEADDR, this.rpcClientOption.isReuseAddr());
-            bootstrap.option(ChannelOption.TCP_NODELAY, this.rpcClientOption.isTCPNoDelay());
-            bootstrap.option(ChannelOption.SO_RCVBUF, this.rpcClientOption.getReceiveBufferSize());
-            bootstrap.option(ChannelOption.SO_SNDBUF, this.rpcClientOption.getSendBufferSize());
-
-            ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new ProtoV3Encoder<ProtoV3Header.RequestHeader>());
-                    ch.pipeline().addLast(new ProtoV3Decoder(false));
-                    ch.pipeline().addLast(new RPCClientHandler());
-                }
-            };
-            bootstrap.group(new NioEventLoopGroup()).handler(initializer);
+    public RPCClient(String ipPorts, RPCClientOption option) {
+        RPCClient.init(option);
+        if (ipPorts == null || ipPorts.length() == 0) {
+            LOG.error("ipPorts format error, the right format is 10.1.1.1:8888;10.2.2.2:9999");
+            throw new IllegalArgumentException("ipPorts format error");
         }
-
-        this.host = host;
-        this.port = port;
-        connect();
-    }
-
-    public ChannelFuture connect() {
-        try {
-            final ChannelFuture future = bootstrap.connect(new InetSocketAddress(host, port));
-            future.awaitUninterruptibly();
-            this.channel = future.channel();
-            future.addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                    if (channelFuture.isSuccess()) {
-                        LOG.info("Connection {} is established", channelFuture.channel());
-                    } else {
-                        LOG.warn(String.format("Connection get failed on {} due to {}",
-                                channelFuture.cause().getMessage(), channelFuture.cause()));
-                    }
-                }
-            });
-            return future;
-        } catch (Exception e) {
-            LOG.error("Failed to connect to {}:{} due to {}", host, port, e.getMessage());
-            throw new RuntimeException(e);
+        String[] ipPortSplits = ipPorts.split(";");
+        this.connectionList = new ArrayList<>(ipPortSplits.length);
+        for (String ipPort : ipPortSplits) {
+            String[] ipPortSplit = ipPort.split(":");
+            if (ipPortSplit.length != 2) {
+                LOG.error("ipPorts format error, the right format is 10.1.1.1:8888;10.2.2.2:9999");
+                throw new IllegalArgumentException("ipPorts format error");
+            }
+            String ip = ipPortSplit[0];
+            int port = Integer.valueOf(ipPortSplit[1]);
+            Channel channel = this.connect(ip, port);
+            Connection connection = new Connection(ip, port, channel);
+            connectionList.add(connection);
         }
     }
 
@@ -175,22 +140,114 @@ public class RPCClient {
         return future;
     }
 
-    public void doSend(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
-        if (this.channel == null || !this.channel.isActive()) {
-            try {
-                connect();
-            } catch (Exception ex) {
-                LOG.error("connect to {}:{} failed", this.host, this.port);
-                throw new RuntimeException("connect failed");
+    private static void init(RPCClientOption option) {
+        if (isInit.compareAndSet(false, true)) {
+            pendingRPC = new ConcurrentHashMap<>();
+            scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+
+            if (option != null) {
+                RPCClient.rpcClientOption = option;
+            } else {
+                RPCClient.rpcClientOption = new RPCClientOption();
+            }
+
+            bootstrap = new Bootstrap();
+            bootstrap.channel(NioSocketChannel.class);
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, rpcClientOption.getConnectTimeoutMillis());
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, rpcClientOption.isKeepAlive());
+            bootstrap.option(ChannelOption.SO_REUSEADDR, rpcClientOption.isReuseAddr());
+            bootstrap.option(ChannelOption.TCP_NODELAY, rpcClientOption.isTCPNoDelay());
+            bootstrap.option(ChannelOption.SO_RCVBUF, rpcClientOption.getReceiveBufferSize());
+            bootstrap.option(ChannelOption.SO_SNDBUF, rpcClientOption.getSendBufferSize());
+
+            ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
+                @Override
+                protected void initChannel(SocketChannel ch) throws Exception {
+                    ch.pipeline().addLast(new ProtoV3Encoder<ProtoV3Header.RequestHeader>());
+                    ch.pipeline().addLast(new ProtoV3Decoder(false));
+                    ch.pipeline().addLast(new RPCClientHandler());
+                }
+            };
+            bootstrap.group(new NioEventLoopGroup()).handler(initializer);
+        }
+    }
+
+    private Channel connect(String ip, int port) {
+        try {
+            final ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
+            future.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                    if (channelFuture.isSuccess()) {
+                        LOG.info("Connection {} is established", channelFuture.channel());
+                    } else {
+                        LOG.warn(String.format("Connection get failed on {} due to {}",
+                                channelFuture.cause().getMessage(), channelFuture.cause()));
+                    }
+                }
+            });
+            future.awaitUninterruptibly();
+            if (future.isSuccess()) {
+                LOG.info("connect {}:{} success", ip, port);
+                return future.channel();
+            } else {
+                LOG.warn("connect {}:{} failed", ip, port);
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.error("failed to connect to {}:{} due to {}", ip, port, e.getMessage());
+            return null;
+        }
+    }
+
+    private void doSend(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
+        int maxTryNum = 3;
+        int currentTry = 0;
+        Set<Integer> excludedSet = new HashSet<>(maxTryNum);
+        while (currentTry < maxTryNum) {
+            int index = this.selectConnectionIndex(excludedSet);
+            excludedSet.add(index);
+            Connection connection = this.connectionList.get(index);
+            Channel channel = connection.getChannel();
+            if (channel == null || !channel.isActive()) {
+                try {
+                    channel = connect(connection.getIp(), connection.getPort());
+                } catch (Exception ex) {
+                    LOG.error("connect to {}:{} failed", connection.getIp(), connection.getPort());
+                    if (currentTry < maxTryNum - 1) {
+                        currentTry++;
+                        continue;
+                    } else {
+                        throw new RuntimeException("connect failed");
+                    }
+                }
+            }
+            LOG.debug("channel isActive={}", channel.isActive());
+            if (channel.isActive()) {
+                connection.setChannel(channel);
+                channel.writeAndFlush(fullRequest);
+                break;
+            } else {
+                LOG.error("connect to {}:{} failed", connection.getIp(), connection.getPort());
+                if (currentTry < maxTryNum - 1) {
+                    currentTry++;
+                    continue;
+                } else {
+                    throw new RuntimeException("connect failed");
+                }
             }
         }
-        LOG.debug("channel isActive={}", this.channel.isActive());
-        if (this.channel.isActive()) {
-            this.channel.writeAndFlush(fullRequest);
-        } else {
-            LOG.error("connect to {}:{} failed", this.host, this.port);
-            throw new RuntimeException("connect failed");
+    }
+
+    private int selectConnectionIndex(Set<Integer> excludedSet) {
+        int maxConnectNum = this.connectionList.size();
+        int tryNum = 0;
+        int randIndex = ThreadLocalRandom.current().nextInt(0, maxConnectNum);
+        while (excludedSet.contains(randIndex) && tryNum < maxConnectNum) {
+            randIndex = ThreadLocalRandom.current().nextInt(0, maxConnectNum);
+            tryNum++;
         }
+        return randIndex;
     }
 
     public static void addRPCFuture(String logId, RPCFuture future) {

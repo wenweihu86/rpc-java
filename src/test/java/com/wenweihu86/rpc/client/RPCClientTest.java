@@ -12,7 +12,12 @@ public class RPCClientTest {
         RPCClientOption clientOption = new RPCClientOption();
         clientOption.setWriteTimeoutMillis(200);
         clientOption.setReadTimeoutMillis(500);
-        RPCClient rpcClient = new RPCClient("127.0.0.1", 8766, clientOption);
+
+        String ipPorts = "127.0.0.1:8766";
+        if (args.length == 1) {
+            ipPorts = args[0];
+        }
+        RPCClient rpcClient = new RPCClient(ipPorts, clientOption);
 
         // build request
         Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
