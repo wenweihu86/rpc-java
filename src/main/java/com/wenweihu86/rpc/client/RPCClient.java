@@ -18,14 +18,18 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.UUID;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.wenweihu86.rpc.codec.ProtoV3Decoder;
 import com.wenweihu86.rpc.codec.ProtoV3Encoder;
@@ -37,7 +41,7 @@ public class RPCClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCClient.class);
 
-    private static AtomicBoolean isInit = new AtomicBoolean(false);
+    private static volatile boolean isInit = false;
     private static RPCClientOption rpcClientOption;
     private static Bootstrap bootstrap;
     private static Map<String, RPCFuture> pendingRPC;
@@ -50,7 +54,9 @@ public class RPCClient {
     }
 
     public RPCClient(String ipPorts, RPCClientOption option) {
-        RPCClient.init(option);
+        if (!isInit) {
+            RPCClient.init(option);
+        }
         if (ipPorts == null || ipPorts.length() == 0) {
             LOG.error("ipPorts format error, the right format is 10.1.1.1:8888;10.2.2.2:9999");
             throw new IllegalArgumentException("ipPorts format error");
@@ -140,8 +146,8 @@ public class RPCClient {
         return future;
     }
 
-    private static void init(RPCClientOption option) {
-        if (isInit.compareAndSet(false, true)) {
+    private synchronized static void init(RPCClientOption option) {
+        if (!isInit) {
             pendingRPC = new ConcurrentHashMap<>();
             scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 
@@ -169,6 +175,7 @@ public class RPCClient {
                 }
             };
             bootstrap.group(new NioEventLoopGroup()).handler(initializer);
+            isInit = true;
         }
     }
 
