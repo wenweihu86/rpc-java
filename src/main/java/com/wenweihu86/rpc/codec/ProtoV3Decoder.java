@@ -1,4 +1,4 @@
-package com.wenweihu86.rpc.codec.proto3;
+package com.wenweihu86.rpc.codec;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

@@ -2,8 +2,8 @@ package com.wenweihu86.rpc.client;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.wenweihu86.rpc.client.handler.RPCClientHandler;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
+import com.wenweihu86.rpc.codec.ProtoV3Header;
+import com.wenweihu86.rpc.codec.ProtoV3Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -23,10 +23,8 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Decoder;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Encoder;
-
-import javax.security.auth.callback.Callback;
+import com.wenweihu86.rpc.codec.ProtoV3Decoder;
+import com.wenweihu86.rpc.codec.ProtoV3Encoder;
 
 /**
  * Created by wenweihu86 on 2017/4/25.

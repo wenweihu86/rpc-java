@@ -1,4 +1,4 @@
-package com.wenweihu86.rpc.codec.proto3;
+package com.wenweihu86.rpc.codec;
 
 import com.google.protobuf.GeneratedMessageV3;
 import io.netty.buffer.ByteBuf;

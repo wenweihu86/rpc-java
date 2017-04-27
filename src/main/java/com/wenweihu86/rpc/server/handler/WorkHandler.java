@@ -1,8 +1,8 @@
 package com.wenweihu86.rpc.server.handler;
 
 import com.google.protobuf.GeneratedMessageV3;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
+import com.wenweihu86.rpc.codec.ProtoV3Header;
+import com.wenweihu86.rpc.codec.ProtoV3Message;
 import com.wenweihu86.rpc.server.RPCServer;
 import com.wenweihu86.rpc.server.ServiceInfo;
 import com.wenweihu86.rpc.server.ServiceManager;

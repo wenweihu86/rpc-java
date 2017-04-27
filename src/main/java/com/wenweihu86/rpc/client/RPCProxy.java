@@ -1,7 +1,5 @@
 package com.wenweihu86.rpc.client;
 
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -10,8 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.UUID;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**

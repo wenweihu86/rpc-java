@@ -1,7 +1,7 @@
 syntax = "proto3";
 
-package proto3;
-option java_package = "com.wenweihu86.rpc.codec.proto3";
+package codec;
+option java_package = "com.wenweihu86.rpc.codec";
 option java_outer_classname = "ProtoV3Header";
 
 enum CompressType {

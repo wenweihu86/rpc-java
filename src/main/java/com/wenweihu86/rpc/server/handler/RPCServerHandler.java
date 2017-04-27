@@ -1,7 +1,7 @@
 package com.wenweihu86.rpc.server.handler;
 
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Header;
-import com.wenweihu86.rpc.codec.proto3.ProtoV3Message;
+import com.wenweihu86.rpc.codec.ProtoV3Header;
+import com.wenweihu86.rpc.codec.ProtoV3Message;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
