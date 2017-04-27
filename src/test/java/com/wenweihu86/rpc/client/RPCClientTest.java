@@ -13,12 +13,14 @@ public class RPCClientTest {
         clientOption.setWriteTimeoutMillis(200);
         clientOption.setReadTimeoutMillis(500);
         RPCClient rpcClient = new RPCClient("127.0.0.1", 8766, clientOption);
-        SampleService sampleService = RPCProxy.getProxy(rpcClient, SampleService.class);
+
+        // build request
         Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
                 .setA(1)
                 .setB("hello").build();
 
-        // sync request
+        // sync call
+        SampleService sampleService = RPCProxy.getProxy(rpcClient, SampleService.class);
         Sample.SampleResponse response = sampleService.sampleRPC(request);
         if (response != null) {
             System.out.printf("service=SampleService.sampleRPC, request=%s response=%s",
@@ -27,7 +29,7 @@ public class RPCClientTest {
             System.out.println("server error, service=SampleService.sampleRPC");
         }
 
-        // async request
+        // async call
         RPCCallback callback = new RPCCallback<Sample.SampleResponse>() {
             @Override
             public void success(Sample.SampleResponse response) {
@@ -40,8 +42,6 @@ public class RPCClientTest {
                 System.out.printf("async call SampleService.sampleRPC failed, %s\n", e.getMessage());
             }
         };
-        rpcClient.asyncCall(
-                "SampleService.sampleRPC",
-                request, Sample.SampleResponse.class, callback);
+        rpcClient.asyncCall("SampleService.sampleRPC", request, callback);
     }
 }

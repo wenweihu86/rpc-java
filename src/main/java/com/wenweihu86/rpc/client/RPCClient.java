@@ -110,7 +110,6 @@ public class RPCClient {
 
     public void asyncCall(String serviceMethodName,
                           Object request,
-                          Class responseClass,
                           RPCCallback callback) {
         String[] splitArray = serviceMethodName.split("\\.");
         if (splitArray.length != 2) {
@@ -120,15 +119,15 @@ public class RPCClient {
         String serviceName = splitArray[0];
         String methodName = splitArray[1];
         final String logId = UUID.randomUUID().toString();
-        this.sendRequest(logId, serviceName, methodName, request, responseClass, callback);
+        this.sendRequest(logId, serviceName, methodName, request, null, callback);
     }
 
-    public RPCFuture sendRequest(final String logId,
-                            final String serviceName,
-                            final String methodName,
-                            Object request,
-                            Class responseClass,
-                            RPCCallback callback) {
+    public <T> RPCFuture sendRequest(final String logId,
+                                     final String serviceName,
+                                     final String methodName,
+                                     Object request,
+                                     Class responseClass,
+                                     RPCCallback<T> callback) {
         ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest = new ProtoV3Message<>();
 
         ProtoV3Header.RequestHeader.Builder headerBuilder = ProtoV3Header.RequestHeader.newBuilder();

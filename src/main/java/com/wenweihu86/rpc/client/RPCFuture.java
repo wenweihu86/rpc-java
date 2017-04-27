@@ -1,35 +1,46 @@
 package com.wenweihu86.rpc.client;
 
-import com.google.protobuf.GeneratedMessageV3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-public class RPCFuture {
+public class RPCFuture<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCFuture.class);
 
     private CountDownLatch latch;
     private ScheduledFuture scheduledFuture;
     private Class responseClass;
-    private GeneratedMessageV3 response;
-    private RPCCallback callback;
+    private T response;
+    private RPCCallback<T> callback;
 
     private Throwable error;
 
     public RPCFuture(ScheduledFuture scheduledFuture,
                      Class responseClass,
-                     RPCCallback callback) {
+                     RPCCallback<T> callback) {
+        if (responseClass == null && callback == null) {
+            LOG.error("responseClass or callback must have one not null only");
+            return;
+        }
         this.scheduledFuture = scheduledFuture;
-        this.responseClass = responseClass;
         this.callback = callback;
+        if (responseClass != null) {
+            this.responseClass = responseClass;
+        } else {
+            Type type = callback.getClass().getGenericInterfaces()[0];
+            Class clazz = (Class) ((ParameterizedType) type).getActualTypeArguments()[0];
+            this.responseClass = clazz;
+        }
         this.latch = new CountDownLatch(1);
     }
 
-    public void success(GeneratedMessageV3 response) {
+    public void success(T response) {
         this.response = response;
         scheduledFuture.cancel(true);
         latch.countDown();
@@ -55,7 +66,7 @@ public class RPCFuture {
         }
     }
 
-    public GeneratedMessageV3 get() throws InterruptedException {
+    public T get() throws InterruptedException {
         latch.await();
         if (error != null) {
             LOG.warn("error occurs due to {}", error.getMessage());
@@ -64,7 +75,7 @@ public class RPCFuture {
         return response;
     }
 
-    public GeneratedMessageV3 get(long timeout, TimeUnit unit) {
+    public T get(long timeout, TimeUnit unit) {
         try {
             if (latch.await(timeout, unit)) {
                 if (error != null) {
