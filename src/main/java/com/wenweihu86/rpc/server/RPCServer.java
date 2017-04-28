@@ -60,9 +60,13 @@ public class RPCServer {
         if (Epoll.isAvailable()) {
             bossGroup = new EpollEventLoopGroup(rpcServerOption.getAcceptorThreadNum());
             workerGroup = new EpollEventLoopGroup(rpcServerOption.getIOThreadNum());
+            ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
+            ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
         } else {
             bossGroup = new NioEventLoopGroup(rpcServerOption.getAcceptorThreadNum());
             workerGroup = new NioEventLoopGroup(rpcServerOption.getIOThreadNum());
+            ((NioEventLoopGroup) bossGroup).setIoRatio(100);
+            ((NioEventLoopGroup) workerGroup).setIoRatio(100);
         }
 
         bootstrap.channel(NioServerSocketChannel.class);
