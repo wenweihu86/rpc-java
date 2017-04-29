@@ -1,5 +1,7 @@
 package com.wenweihu86.rpc.client;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.util.JsonFormat;
 import com.wenweihu86.rpc.proto.Sample;
 import com.wenweihu86.rpc.proto.SampleService;
 
@@ -24,12 +26,19 @@ public class RPCClientTest {
                 .setA(1)
                 .setB("hello").build();
 
+        final JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
         // sync call
         SampleService sampleService = RPCProxy.getProxy(rpcClient, SampleService.class);
         Sample.SampleResponse response = sampleService.sampleRPC(request);
         if (response != null) {
-            System.out.printf("service=SampleService.sampleRPC, request=%s response=%s",
-                    request.toString(), response.toString());
+            try {
+                System.out.printf("sync call service=SampleService.sampleRPC success, " +
+                                "request=%s response=%s\n",
+                        printer.print(request), printer.print(response));
+            } catch (InvalidProtocolBufferException ex) {
+                System.out.println(ex.getMessage());
+            }
+
         } else {
             System.out.println("server error, service=SampleService.sampleRPC");
         }
@@ -38,8 +47,12 @@ public class RPCClientTest {
         RPCCallback callback = new RPCCallback<Sample.SampleResponse>() {
             @Override
             public void success(Sample.SampleResponse response) {
-                System.out.printf("async call SampleService.sampleRPC success, response=%s\n",
-                        response.toString());
+                try {
+                    System.out.printf("async call SampleService.sampleRPC success, response=%s\n",
+                            printer.print(response));
+                } catch (InvalidProtocolBufferException ex) {
+                    System.out.println(ex.getMessage());
+                }
             }
 
             @Override

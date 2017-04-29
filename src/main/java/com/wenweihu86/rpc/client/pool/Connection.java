@@ -1,4 +1,4 @@
-package com.wenweihu86.rpc.client;
+package com.wenweihu86.rpc.client.pool;
 
 import io.netty.channel.Channel;
 

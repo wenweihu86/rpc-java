@@ -1,6 +1,8 @@
 package com.wenweihu86.rpc.server.handler;
 
 import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.TextFormat;
+import com.google.protobuf.util.JsonFormat;
 import com.wenweihu86.rpc.codec.ProtoV3Header;
 import com.wenweihu86.rpc.codec.ProtoV3Message;
 import com.wenweihu86.rpc.server.RPCServer;
@@ -78,9 +80,11 @@ public class WorkHandler {
                 ctx.channel().writeAndFlush(response);
 
                 long endTime = System.currentTimeMillis();
+                JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
                 LOG.info("elapse={}ms service={} method={} logId={} request={} response={}",
                         endTime - startTime, serviceName, methodName, requestHeader.getLogId(),
-                        protoRequest.toString(), protoResponse.toString());
+                        printer.print(protoRequest),
+                        printer.print(protoResponse));
             } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage());
             }

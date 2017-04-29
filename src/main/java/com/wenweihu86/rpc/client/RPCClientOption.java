@@ -2,6 +2,8 @@ package com.wenweihu86.rpc.client;
 
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+import org.apache.commons.pool2.impl.GenericKeyedObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPool;
 
 import java.nio.ByteOrder;
 
@@ -46,6 +48,58 @@ public class RPCClientOption {
 
     // The max size
     private int maxSize = Integer.MAX_VALUE;
+
+    // connection pool
+    /**
+     * max ilde connection size
+     * @see GenericObjectPool#getMaxIdle()
+     */
+    private int maxIdleSize = 5;
+
+    /**
+     * min idle connection size
+     * @see GenericObjectPool#getMinIdle()
+     */
+    private int minIdleSize = 2;
+
+    /**
+     * max connection size that connection pool can make
+     * @see GenericObjectPool#getMaxTotal()
+     */
+    private int threadPoolSize = 20;
+
+    /**
+     * max wait time when borrow connection from pool, in milliseconds
+     * @see GenericObjectPool#getMaxWaitMillis()
+     */
+    private int maxWaitMillis = 200;
+
+    // The min evictable idle time
+    private int minEvictableIdleTimeMillis = 1000 * 60 * 2;
+
+    /**
+     * The default value for the {@code testOnCreate} configuration attribute.
+     * @see GenericObjectPool#getTestOnCreate()
+     */
+    private boolean testOnCreate = true;
+
+    /**
+     * The default value for the {@code testOnBorrow} configuration attribute.
+     * @see GenericObjectPool#getTestOnBorrow()
+     */
+    private boolean testOnBorrow = true;
+
+    /**
+     * The default value for the {@code testOnReturn} configuration attribute.
+     * @see GenericObjectPool#getTestOnReturn()
+     */
+    private boolean testOnReturn = false;
+
+    /**
+     * The default value for the {@code lifo} configuration attribute.
+     * @see GenericObjectPool#getLifo()
+     */
+    private boolean lifo = false;
 
     public int getConnectTimeoutMillis() {
         return connectTimeoutMillis;
@@ -159,4 +213,91 @@ public class RPCClientOption {
         this.maxSize = maxSize;
     }
 
+    public boolean isTcpNoDelay() {
+        return tcpNoDelay;
+    }
+
+    public void setTcpNoDelay(boolean tcpNoDelay) {
+        this.tcpNoDelay = tcpNoDelay;
+    }
+
+    public int getIoThreadNum() {
+        return ioThreadNum;
+    }
+
+    public void setIoThreadNum(int ioThreadNum) {
+        this.ioThreadNum = ioThreadNum;
+    }
+
+    public int getMaxIdleSize() {
+        return maxIdleSize;
+    }
+
+    public void setMaxIdleSize(int maxIdleSize) {
+        this.maxIdleSize = maxIdleSize;
+    }
+
+    public int getMinIdleSize() {
+        return minIdleSize;
+    }
+
+    public void setMinIdleSize(int minIdleSize) {
+        this.minIdleSize = minIdleSize;
+    }
+
+    public int getThreadPoolSize() {
+        return threadPoolSize;
+    }
+
+    public void setThreadPoolSize(int threadPoolSize) {
+        this.threadPoolSize = threadPoolSize;
+    }
+
+    public int getMaxWaitMillis() {
+        return maxWaitMillis;
+    }
+
+    public void setMaxWaitMillis(int maxWaitMillis) {
+        this.maxWaitMillis = maxWaitMillis;
+    }
+
+    public int getMinEvictableIdleTimeMillis() {
+        return minEvictableIdleTimeMillis;
+    }
+
+    public void setMinEvictableIdleTimeMillis(int minEvictableIdleTimeMillis) {
+        this.minEvictableIdleTimeMillis = minEvictableIdleTimeMillis;
+    }
+
+    public boolean isTestOnCreate() {
+        return testOnCreate;
+    }
+
+    public void setTestOnCreate(boolean testOnCreate) {
+        this.testOnCreate = testOnCreate;
+    }
+
+    public boolean isTestOnBorrow() {
+        return testOnBorrow;
+    }
+
+    public void setTestOnBorrow(boolean testOnBorrow) {
+        this.testOnBorrow = testOnBorrow;
+    }
+
+    public boolean isTestOnReturn() {
+        return testOnReturn;
+    }
+
+    public void setTestOnReturn(boolean testOnReturn) {
+        this.testOnReturn = testOnReturn;
+    }
+
+    public boolean isLifo() {
+        return lifo;
+    }
+
+    public void setLifo(boolean lifo) {
+        this.lifo = lifo;
+    }
 }

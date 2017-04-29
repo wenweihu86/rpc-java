@@ -1,5 +1,7 @@
 package com.wenweihu86.rpc.client;
 
+import com.google.protobuf.MessageOrBuilder;
+import com.google.protobuf.util.JsonFormat;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -49,9 +51,11 @@ public class RPCProxy implements MethodInterceptor {
                 TimeUnit.MILLISECONDS);
 
         long endTime = System.currentTimeMillis();
+        JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
         LOG.info("elapse={}ms service={} method={} logId={} request={} response={}",
                 endTime - startTime, serviceName, methodName, logId,
-                args[0].toString(), response.toString());
+                printer.print((MessageOrBuilder) args[0]),
+                printer.print((MessageOrBuilder) response));
         return response;
     }
 

@@ -2,6 +2,8 @@ package com.wenweihu86.rpc.client;
 
 import com.google.protobuf.GeneratedMessageV3;
 import com.wenweihu86.rpc.client.handler.RPCClientHandler;
+import com.wenweihu86.rpc.client.pool.Connection;
+import com.wenweihu86.rpc.client.pool.ConnectionPool;
 import com.wenweihu86.rpc.codec.ProtoV3Header;
 import com.wenweihu86.rpc.codec.ProtoV3Message;
 import io.netty.bootstrap.Bootstrap;
@@ -47,7 +49,7 @@ public class RPCClient {
     private static Map<String, RPCFuture> pendingRPC;
     private static ScheduledExecutorService scheduledExecutor;
 
-    private List<Connection> connectionList;
+    private List<ConnectionPool> connectionPoolList;
 
     public RPCClient(String ipPorts) {
         this(ipPorts, null);
@@ -62,7 +64,7 @@ public class RPCClient {
             throw new IllegalArgumentException("ipPorts format error");
         }
         String[] ipPortSplits = ipPorts.split(";");
-        this.connectionList = new ArrayList<>(ipPortSplits.length);
+        this.connectionPoolList = new ArrayList<>(ipPortSplits.length);
         for (String ipPort : ipPortSplits) {
             String[] ipPortSplit = ipPort.split(":");
             if (ipPortSplit.length != 2) {
@@ -71,9 +73,8 @@ public class RPCClient {
             }
             String ip = ipPortSplit[0];
             int port = Integer.valueOf(ipPortSplit[1]);
-            Channel channel = this.connect(ip, port);
-            Connection connection = new Connection(ip, port, channel);
-            connectionList.add(connection);
+            ConnectionPool connectionPool = new ConnectionPool(this, ip, port);
+            connectionPoolList.add(connectionPool);
         }
     }
 
@@ -118,32 +119,60 @@ public class RPCClient {
             return null;
         }
 
-        final ScheduledExecutorService scheduledExecutor = RPCClient.getScheduledExecutor();
-        final long readWriteTimeout = RPCClient.getRpcClientOption().getReadTimeoutMillis()
-                + RPCClient.getRpcClientOption().getWriteTimeoutMillis();
-        ScheduledFuture scheduledFuture = scheduledExecutor.schedule(new Runnable() {
-            @Override
-            public void run() {
-                RPCFuture rpcFuture = RPCClient.removeRPCFuture(logId);
-                if (rpcFuture != null) {
-                    LOG.warn("request timeout, logId={}, service={}, method={}",
-                            logId, serviceName, methodName);
-                    rpcFuture.timeout();
-                } else {
-                    LOG.warn("request logId={} not found", logId);
-                }
-            }
-        }, readWriteTimeout, TimeUnit.MILLISECONDS);
-
-        RPCFuture future = new RPCFuture(scheduledFuture, responseClass, callback);
-        RPCClient.addRPCFuture(logId, future);
         try {
             this.doSend(fullRequest);
+            // add request to RPCFuture and add timeout task
+            final ScheduledExecutorService scheduledExecutor = RPCClient.getScheduledExecutor();
+            final long readTimeout = RPCClient.getRpcClientOption().getReadTimeoutMillis();
+            ScheduledFuture scheduledFuture = scheduledExecutor.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    RPCFuture rpcFuture = RPCClient.removeRPCFuture(logId);
+                    if (rpcFuture != null) {
+                        LOG.warn("request timeout, logId={}, service={}, method={}",
+                                logId, serviceName, methodName);
+                        rpcFuture.timeout();
+                    } else {
+                        LOG.warn("request logId={} not found", logId);
+                    }
+                }
+            }, readTimeout, TimeUnit.MILLISECONDS);
+
+            RPCFuture future = new RPCFuture(scheduledFuture, responseClass, callback);
+            RPCClient.addRPCFuture(logId, future);
+            return future;
         } catch (RuntimeException ex) {
             RPCClient.removeRPCFuture(logId);
             return null;
         }
-        return future;
+    }
+
+    public Channel connect(String ip, int port) {
+        try {
+            final ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
+            future.addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                    if (channelFuture.isSuccess()) {
+                        LOG.info("Connection {} is established", channelFuture.channel());
+                    } else {
+                        LOG.warn(String.format("Connection get failed on {} due to {}",
+                                channelFuture.cause().getMessage(), channelFuture.cause()));
+                    }
+                }
+            });
+            future.awaitUninterruptibly();
+            if (future.isSuccess()) {
+                LOG.info("connect {}:{} success", ip, port);
+                return future.channel();
+            } else {
+                LOG.warn("connect {}:{} failed", ip, port);
+                return null;
+            }
+        } catch (Exception e) {
+            LOG.error("failed to connect to {}:{} due to {}", ip, port, e.getMessage());
+            return null;
+        }
     }
 
     private synchronized static void init(RPCClientOption option) {
@@ -179,34 +208,6 @@ public class RPCClient {
         }
     }
 
-    private Channel connect(String ip, int port) {
-        try {
-            final ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
-            future.addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                    if (channelFuture.isSuccess()) {
-                        LOG.info("Connection {} is established", channelFuture.channel());
-                    } else {
-                        LOG.warn(String.format("Connection get failed on {} due to {}",
-                                channelFuture.cause().getMessage(), channelFuture.cause()));
-                    }
-                }
-            });
-            future.awaitUninterruptibly();
-            if (future.isSuccess()) {
-                LOG.info("connect {}:{} success", ip, port);
-                return future.channel();
-            } else {
-                LOG.warn("connect {}:{} failed", ip, port);
-                return null;
-            }
-        } catch (Exception e) {
-            LOG.error("failed to connect to {}:{} due to {}", ip, port, e.getMessage());
-            return null;
-        }
-    }
-
     private void doSend(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
         int maxTryNum = 3;
         int currentTry = 0;
@@ -214,28 +215,11 @@ public class RPCClient {
         while (currentTry < maxTryNum) {
             int index = this.selectConnectionIndex(excludedSet);
             excludedSet.add(index);
-            Connection connection = this.connectionList.get(index);
-            Channel channel = connection.getChannel();
-            if (channel == null || !channel.isActive()) {
-                try {
-                    channel = connect(connection.getIp(), connection.getPort());
-                } catch (Exception ex) {
-                    LOG.error("connect to {}:{} failed", connection.getIp(), connection.getPort());
-                    if (currentTry < maxTryNum - 1) {
-                        currentTry++;
-                        continue;
-                    } else {
-                        throw new RuntimeException("connect failed");
-                    }
-                }
-            }
-            LOG.debug("channel isActive={}", channel.isActive());
-            if (channel.isActive()) {
-                connection.setChannel(channel);
-                channel.writeAndFlush(fullRequest);
-                break;
-            } else {
-                LOG.error("connect to {}:{} failed", connection.getIp(), connection.getPort());
+            ConnectionPool connectionPool = this.connectionPoolList.get(index);
+            Connection connection = connectionPool.getConnection();
+            if (connection == null
+                    || !connection.getChannel().isOpen()
+                    || !connection.getChannel().isActive()) {
                 if (currentTry < maxTryNum - 1) {
                     currentTry++;
                     continue;
@@ -243,11 +227,16 @@ public class RPCClient {
                     throw new RuntimeException("connect failed");
                 }
             }
+            Channel channel = connection.getChannel();
+            LOG.debug("channel isActive={}", channel.isActive());
+            connection.setChannel(channel);
+            channel.writeAndFlush(fullRequest);
+            break;
         }
     }
 
     private int selectConnectionIndex(Set<Integer> excludedSet) {
-        int maxConnectNum = this.connectionList.size();
+        int maxConnectNum = this.connectionPoolList.size();
         int tryNum = 0;
         int randIndex = ThreadLocalRandom.current().nextInt(0, maxConnectNum);
         while (excludedSet.contains(randIndex) && tryNum < maxConnectNum) {
@@ -277,7 +266,4 @@ public class RPCClient {
         return rpcClientOption;
     }
 
-    public static void setRpcClientOption(RPCClientOption rpcClientOption) {
-        RPCClient.rpcClientOption = rpcClientOption;
-    }
 }
