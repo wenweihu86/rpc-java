@@ -11,10 +11,10 @@ import java.util.List;
 /**
  * Created by wenweihu86 on 2017/4/25.
  */
-public class ProtoV3Encoder<T extends GeneratedMessageV3> extends MessageToMessageEncoder<ProtoV3Message<T>> {
+public class RPCEncoder<T extends GeneratedMessageV3> extends MessageToMessageEncoder<RPCMessage<T>> {
 
     @Override
-    protected void encode(ChannelHandlerContext ctx, ProtoV3Message<T> object, List<Object> out)
+    protected void encode(ChannelHandlerContext ctx, RPCMessage<T> object, List<Object> out)
             throws Exception {
         byte[] headerBytes = object.getHeader().toByteArray();
         int totalLength = 4 + 4 + headerBytes.length + object.getBody().length;

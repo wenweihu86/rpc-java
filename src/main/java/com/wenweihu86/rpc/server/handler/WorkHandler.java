@@ -1,10 +1,9 @@
 package com.wenweihu86.rpc.server.handler;
 
 import com.google.protobuf.GeneratedMessageV3;
-import com.google.protobuf.TextFormat;
 import com.google.protobuf.util.JsonFormat;
-import com.wenweihu86.rpc.codec.ProtoV3Header;
-import com.wenweihu86.rpc.codec.ProtoV3Message;
+import com.wenweihu86.rpc.codec.RPCHeader;
+import com.wenweihu86.rpc.codec.RPCMessage;
 import com.wenweihu86.rpc.server.RPCServer;
 import com.wenweihu86.rpc.server.ServiceInfo;
 import com.wenweihu86.rpc.server.ServiceManager;
@@ -40,10 +39,10 @@ public class WorkHandler {
     }
 
     public static class WorkTask implements Runnable {
-        private ProtoV3Message<ProtoV3Header.RequestHeader> request;
+        private RPCMessage<RPCHeader.RequestHeader> request;
         private ChannelHandlerContext ctx;
 
-        public WorkTask(ChannelHandlerContext ctx, ProtoV3Message<ProtoV3Header.RequestHeader> request) {
+        public WorkTask(ChannelHandlerContext ctx, RPCMessage<RPCHeader.RequestHeader> request) {
             this.request = request;
             this.ctx = ctx;
         }
@@ -52,7 +51,7 @@ public class WorkHandler {
         public void run() {
             long startTime = System.currentTimeMillis();
 
-            ProtoV3Header.RequestHeader requestHeader = request.getHeader();
+            RPCHeader.RequestHeader requestHeader = request.getHeader();
             String serviceName = requestHeader.getServiceName();
             String methodName = requestHeader.getMethodName();
             ServiceManager serviceManager = ServiceManager.getInstance();
@@ -70,10 +69,10 @@ public class WorkHandler {
                         (GeneratedMessageV3) serviceInfo.getMethod().invoke(serviceInfo.getService(), protoRequest);
                 Method encodeMethod = protoResponse.getClass().getMethod("toByteArray");
                 byte[] responseBody = (byte[]) encodeMethod.invoke(protoResponse);
-                ProtoV3Message<ProtoV3Header.ResponseHeader> response = new ProtoV3Message<>();
-                ProtoV3Header.ResponseHeader responseHeader = ProtoV3Header.ResponseHeader.newBuilder()
+                RPCMessage<RPCHeader.ResponseHeader> response = new RPCMessage<>();
+                RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
                         .setLogId(requestHeader.getLogId())
-                        .setResCode(ProtoV3Header.ResCode.RES_SUCCESS)
+                        .setResCode(RPCHeader.ResCode.RES_SUCCESS)
                         .setResMsg("").build();
                 response.setHeader(responseHeader);
                 response.setBody(responseBody);

@@ -4,8 +4,8 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.wenweihu86.rpc.client.handler.RPCClientHandler;
 import com.wenweihu86.rpc.client.pool.Connection;
 import com.wenweihu86.rpc.client.pool.ConnectionPool;
-import com.wenweihu86.rpc.codec.ProtoV3Header;
-import com.wenweihu86.rpc.codec.ProtoV3Message;
+import com.wenweihu86.rpc.codec.RPCHeader;
+import com.wenweihu86.rpc.codec.RPCMessage;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -33,8 +33,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
-import com.wenweihu86.rpc.codec.ProtoV3Decoder;
-import com.wenweihu86.rpc.codec.ProtoV3Encoder;
+import com.wenweihu86.rpc.codec.RPCDecoder;
+import com.wenweihu86.rpc.codec.RPCEncoder;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -98,9 +98,9 @@ public class RPCClient {
                                      Object request,
                                      Class responseClass,
                                      RPCCallback<T> callback) {
-        ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest = new ProtoV3Message<>();
+        RPCMessage<RPCHeader.RequestHeader> fullRequest = new RPCMessage<>();
 
-        ProtoV3Header.RequestHeader.Builder headerBuilder = ProtoV3Header.RequestHeader.newBuilder();
+        RPCHeader.RequestHeader.Builder headerBuilder = RPCHeader.RequestHeader.newBuilder();
         headerBuilder.setLogId(logId);
         headerBuilder.setServiceName(serviceName);
         headerBuilder.setMethodName(methodName);
@@ -198,8 +198,8 @@ public class RPCClient {
             ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
                 @Override
                 protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new ProtoV3Encoder<ProtoV3Header.RequestHeader>());
-                    ch.pipeline().addLast(new ProtoV3Decoder(false));
+                    ch.pipeline().addLast(new RPCEncoder<RPCHeader.RequestHeader>());
+                    ch.pipeline().addLast(new RPCDecoder(false));
                     ch.pipeline().addLast(new RPCClientHandler());
                 }
             };
@@ -208,7 +208,7 @@ public class RPCClient {
         }
     }
 
-    private void doSend(ProtoV3Message<ProtoV3Header.RequestHeader> fullRequest) {
+    private void doSend(RPCMessage<RPCHeader.RequestHeader> fullRequest) {
         int maxTryNum = 3;
         int currentTry = 0;
         Set<Integer> excludedSet = new HashSet<>(maxTryNum);

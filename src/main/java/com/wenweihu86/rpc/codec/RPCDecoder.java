@@ -9,13 +9,13 @@ import java.util.List;
 /**
  * Created by wenweihu86 on 2017/4/25.
  */
-public class ProtoV3Decoder extends ByteToMessageDecoder {
+public class RPCDecoder extends ByteToMessageDecoder {
 
     public static final int FIXED_LEN = 8;
 
     private boolean isRequest;
 
-    public ProtoV3Decoder(boolean isRequest) {
+    public RPCDecoder(boolean isRequest) {
         this.isRequest = isRequest;
     }
 
@@ -40,14 +40,14 @@ public class ProtoV3Decoder extends ByteToMessageDecoder {
         in.readBytes(bodyBytes, 0, bodyLen);
 
         if (isRequest) {
-            ProtoV3Message<ProtoV3Header.RequestHeader> object = new ProtoV3Message<>();
-            ProtoV3Header.RequestHeader header = ProtoV3Header.RequestHeader.parseFrom(headBytes);
+            RPCMessage<RPCHeader.RequestHeader> object = new RPCMessage<>();
+            RPCHeader.RequestHeader header = RPCHeader.RequestHeader.parseFrom(headBytes);
             object.setHeader(header);
             object.setBody(bodyBytes);
             out.add(object);
         } else  {
-            ProtoV3Message<ProtoV3Header.ResponseHeader> object = new ProtoV3Message<>();
-            ProtoV3Header.ResponseHeader header = ProtoV3Header.ResponseHeader.parseFrom(headBytes);
+            RPCMessage<RPCHeader.ResponseHeader> object = new RPCMessage<>();
+            RPCHeader.ResponseHeader header = RPCHeader.ResponseHeader.parseFrom(headBytes);
             object.setHeader(header);
             object.setBody(bodyBytes);
             out.add(object);

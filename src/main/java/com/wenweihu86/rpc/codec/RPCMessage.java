@@ -5,7 +5,7 @@ import com.google.protobuf.GeneratedMessageV3;
 /**
  * Created by wenweihu86 on 2017/4/26.
  */
-public class ProtoV3Message<T extends GeneratedMessageV3> {
+public class RPCMessage<T extends GeneratedMessageV3> {
 
     private T header;
     private byte[] body;

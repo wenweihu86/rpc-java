@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package codec;
 option java_package = "com.wenweihu86.rpc.codec";
-option java_outer_classname = "ProtoV3Header";
+option java_outer_classname = "RPCHeader";
 
 enum CompressType {
     COMPRESS_NO = 0;
@@ -20,7 +20,7 @@ message RequestHeader {
     string methodName = 2;
     string logId = 3;
     CompressType compressType = 4;
-    string customParam = 5;
+    map<string, string> customParam = 5;
 }
 
 message ResponseHeader {
