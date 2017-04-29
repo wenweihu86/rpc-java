@@ -2,8 +2,8 @@ package com.wenweihu86.rpc.client;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
-import com.wenweihu86.rpc.proto.Sample;
-import com.wenweihu86.rpc.proto.SampleService;
+import com.wenweihu86.rpc.api.Sample;
+import com.wenweihu86.rpc.api.SampleService;
 
 /**
  * Created by wenweihu86 on 2017/4/26.

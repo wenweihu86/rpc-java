@@ -1,7 +1,7 @@
 package com.wenweihu86.rpc.server;
 
-import com.wenweihu86.rpc.proto.Sample;
-import com.wenweihu86.rpc.proto.SampleService;
+import com.wenweihu86.rpc.api.Sample;
+import com.wenweihu86.rpc.api.SampleService;
 
 /**
  * Created by baidu on 2017/4/25.
