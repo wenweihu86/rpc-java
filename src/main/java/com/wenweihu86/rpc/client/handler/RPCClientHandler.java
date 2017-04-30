@@ -18,8 +18,8 @@ public class RPCClientHandler extends SimpleChannelInboundHandler<RPCMessage<RPC
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx,
-                             RPCMessage<RPCHeader.ResponseHeader> response) throws Exception {
-        String logId = response.getHeader().getLogId();
+                             RPCMessage<RPCHeader.ResponseHeader> fullResponse) throws Exception {
+        String logId = fullResponse.getHeader().getLogId();
         RPCFuture future = RPCClient.getRPCFuture(logId);
         if (future == null) {
             LOG.warn("receive msg from server but no request found, logId={}", logId);
@@ -27,13 +27,14 @@ public class RPCClientHandler extends SimpleChannelInboundHandler<RPCMessage<RPC
         }
         RPCClient.removeRPCFuture(logId);
 
-        if (response.getHeader().getResCode() == RPCHeader.ResCode.RES_SUCCESS) {
+        if (fullResponse.getHeader().getResCode() == RPCHeader.ResCode.RES_SUCCESS) {
             Method decodeMethod = future.getResponseClass().getMethod("parseFrom", byte[].class);
             GeneratedMessageV3 responseBody = (GeneratedMessageV3) decodeMethod.invoke(
-                    future.getResponseClass(), response.getBody());
-            future.success(responseBody);
+                    future.getResponseClass(), fullResponse.getBody());
+            fullResponse.setBodyMessage(responseBody);
+            future.success(fullResponse);
         } else {
-            future.fail(new RuntimeException(response.getHeader().getResMsg()));
+            future.fail(new RuntimeException(fullResponse.getHeader().getResMsg()));
         }
     }
 

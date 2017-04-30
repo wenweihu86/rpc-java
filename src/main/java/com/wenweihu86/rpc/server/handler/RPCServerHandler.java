@@ -2,6 +2,7 @@ package com.wenweihu86.rpc.server.handler;
 
 import com.wenweihu86.rpc.codec.RPCHeader;
 import com.wenweihu86.rpc.codec.RPCMessage;
+import com.wenweihu86.rpc.server.RPCServer;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
@@ -14,10 +15,16 @@ public class RPCServerHandler extends SimpleChannelInboundHandler<RPCMessage<RPC
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCServerHandler.class);
 
+    private RPCServer rpcServer;
+
+    public RPCServerHandler(RPCServer rpcServer) {
+        this.rpcServer = rpcServer;
+    }
+
     @Override
     public void channelRead0(ChannelHandlerContext ctx,
                              RPCMessage<RPCHeader.RequestHeader> request) throws Exception {
-        WorkHandler.WorkTask task = new WorkHandler.WorkTask(ctx, request);
+        WorkHandler.WorkTask task = new WorkHandler.WorkTask(ctx, request, rpcServer);
         WorkHandler.getExecutor().submit(task);
     }
 

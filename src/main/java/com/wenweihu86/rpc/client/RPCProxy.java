@@ -2,6 +2,10 @@ package com.wenweihu86.rpc.client;
 
 import com.google.protobuf.MessageOrBuilder;
 import com.google.protobuf.util.JsonFormat;
+import com.wenweihu86.rpc.codec.RPCHeader;
+import com.wenweihu86.rpc.codec.RPCMessage;
+import com.wenweihu86.rpc.filter.chain.ClientFilterChain;
+import com.wenweihu86.rpc.filter.chain.FilterChain;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -10,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -39,24 +42,20 @@ public class RPCProxy implements MethodInterceptor {
         final String logId = UUID.randomUUID().toString();
         final String serviceName = method.getDeclaringClass().getSimpleName();
         final String methodName = method.getName();
-        RPCFuture future = rpcClient.sendRequest(
-                logId, serviceName, methodName,
-                args[0], method.getReturnType(), null);
+        RPCMessage<RPCHeader.RequestHeader> fullRequest = rpcClient.buildFullRequest(
+                logId, serviceName, methodName, args[0], method.getReturnType());
 
-        if (future == null) {
-            return null;
-        }
-        Object response = future.get(
-                RPCClient.getRpcClientOption().getReadTimeoutMillis(),
-                TimeUnit.MILLISECONDS);
+        RPCMessage<RPCHeader.ResponseHeader> fullResponse = new RPCMessage<>();
+        FilterChain filterChain = new ClientFilterChain(rpcClient.getFilters(), rpcClient);
+        filterChain.doFilter(fullRequest, fullResponse);
 
         long endTime = System.currentTimeMillis();
         JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
         LOG.info("elapse={}ms service={} method={} logId={} request={} response={}",
                 endTime - startTime, serviceName, methodName, logId,
                 printer.print((MessageOrBuilder) args[0]),
-                printer.print((MessageOrBuilder) response));
-        return response;
+                printer.print((MessageOrBuilder) fullResponse.getBodyMessage()));
+        return fullResponse.getBodyMessage();
     }
 
 }

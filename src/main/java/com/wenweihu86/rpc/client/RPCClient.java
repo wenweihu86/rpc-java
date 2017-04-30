@@ -6,6 +6,7 @@ import com.wenweihu86.rpc.client.pool.Connection;
 import com.wenweihu86.rpc.client.pool.ConnectionPool;
 import com.wenweihu86.rpc.codec.RPCHeader;
 import com.wenweihu86.rpc.codec.RPCMessage;
+import com.wenweihu86.rpc.filter.Filter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelOption;
@@ -19,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.ArrayList;
@@ -50,12 +53,21 @@ public class RPCClient {
     private static ScheduledExecutorService scheduledExecutor;
 
     private List<ConnectionPool> connectionPoolList;
+    private List<Filter> filters;
 
     public RPCClient(String ipPorts) {
-        this(ipPorts, null);
+        this(ipPorts, null, null);
     }
 
     public RPCClient(String ipPorts, RPCClientOption option) {
+        this(ipPorts, option, null);
+    }
+
+    public RPCClient(String ipPorts, List<Filter> filters) {
+        this(ipPorts, null, filters);
+    }
+
+    public RPCClient(String ipPorts, RPCClientOption option, List<Filter> filters) {
         if (!isInit) {
             RPCClient.init(option);
         }
@@ -76,6 +88,7 @@ public class RPCClient {
             ConnectionPool connectionPool = new ConnectionPool(this, ip, port);
             connectionPoolList.add(connectionPool);
         }
+        this.filters = filters;
     }
 
     public void asyncCall(String serviceMethodName,
@@ -88,16 +101,24 @@ public class RPCClient {
         }
         String serviceName = splitArray[0];
         String methodName = splitArray[1];
+        if (callback == null) {
+            LOG.error("callback of async call can not be null");
+            throw new IllegalArgumentException("callback of async call can not be null");
+        }
+        Type type = callback.getClass().getGenericInterfaces()[0];
+        Class responseBodyClass = (Class) ((ParameterizedType) type).getActualTypeArguments()[0];
         final String logId = UUID.randomUUID().toString();
-        this.sendRequest(logId, serviceName, methodName, request, null, callback);
+        RPCMessage<RPCHeader.RequestHeader> fullRequest = this.buildFullRequest(
+                logId, serviceName, methodName, request, responseBodyClass);
+        this.sendRequest(fullRequest, callback);
     }
 
-    public <T> RPCFuture sendRequest(final String logId,
-                                     final String serviceName,
-                                     final String methodName,
-                                     Object request,
-                                     Class responseClass,
-                                     RPCCallback<T> callback) {
+    public RPCMessage<RPCHeader.RequestHeader> buildFullRequest(
+            final String logId,
+            final String serviceName,
+            final String methodName,
+            Object requestBody,
+            Class responseBodyClass) {
         RPCMessage<RPCHeader.RequestHeader> fullRequest = new RPCMessage<>();
 
         RPCHeader.RequestHeader.Builder headerBuilder = RPCHeader.RequestHeader.newBuilder();
@@ -105,25 +126,36 @@ public class RPCClient {
         headerBuilder.setServiceName(serviceName);
         headerBuilder.setMethodName(methodName);
         fullRequest.setHeader(headerBuilder.build());
+        fullRequest.setResponseBodyClass(responseBodyClass);
 
-        if (!GeneratedMessageV3.class.isAssignableFrom(request.getClass())) {
+        if (!GeneratedMessageV3.class.isAssignableFrom(requestBody.getClass())) {
             LOG.error("request must be protobuf message");
             return null;
         }
+        fullRequest.setBodyMessage((GeneratedMessageV3) requestBody);
+
         try {
-            Method encodeMethod = request.getClass().getMethod("toByteArray");
-            byte[] bodyBytes = (byte[]) encodeMethod.invoke(request);
+            Method encodeMethod = requestBody.getClass().getMethod("toByteArray");
+            byte[] bodyBytes = (byte[]) encodeMethod.invoke(requestBody);
             fullRequest.setBody(bodyBytes);
         } catch (Exception ex) {
             LOG.error("request object has no method toByteArray");
             return null;
         }
 
+        return fullRequest;
+    }
+
+    public <T> RPCFuture sendRequest(final RPCMessage<RPCHeader.RequestHeader> fullRequest,
+                                     RPCCallback<T> callback) {
+        final String logId = fullRequest.getHeader().getLogId();
         try {
             this.doSend(fullRequest);
             // add request to RPCFuture and add timeout task
             final ScheduledExecutorService scheduledExecutor = RPCClient.getScheduledExecutor();
             final long readTimeout = RPCClient.getRpcClientOption().getReadTimeoutMillis();
+            final String serviceName = fullRequest.getHeader().getServiceName();
+            final String methodName = fullRequest.getHeader().getMethodName();
             ScheduledFuture scheduledFuture = scheduledExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
@@ -138,7 +170,7 @@ public class RPCClient {
                 }
             }, readTimeout, TimeUnit.MILLISECONDS);
 
-            RPCFuture future = new RPCFuture(scheduledFuture, responseClass, callback);
+            RPCFuture future = new RPCFuture(scheduledFuture, fullRequest, callback);
             RPCClient.addRPCFuture(logId, future);
             return future;
         } catch (RuntimeException ex) {
@@ -264,6 +296,10 @@ public class RPCClient {
 
     public static RPCClientOption getRpcClientOption() {
         return rpcClientOption;
+    }
+
+    public List<Filter> getFilters() {
+        return filters;
     }
 
 }

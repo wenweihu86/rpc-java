@@ -3,6 +3,7 @@ package com.wenweihu86.rpc.server;
 import com.wenweihu86.rpc.codec.RPCDecoder;
 import com.wenweihu86.rpc.codec.RPCEncoder;
 import com.wenweihu86.rpc.codec.RPCHeader;
+import com.wenweihu86.rpc.filter.Filter;
 import com.wenweihu86.rpc.server.handler.RPCServerHandler;
 import com.wenweihu86.rpc.server.handler.RPCServerChannelIdleHandler;
 import com.wenweihu86.rpc.server.handler.WorkHandler;
@@ -21,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
@@ -43,11 +45,21 @@ public class RPCServer {
     // 处理业务逻辑的线程
     private EventLoopGroup workerGroup;
 
+    private List<Filter> filters;
+
     public RPCServer(int port) {
-        this(port, null);
+        this(port, null, null);
     }
 
     public RPCServer(int port, final RPCServerOption option) {
+        this(port, option, null);
+    }
+
+    public RPCServer(int port, List<Filter> filters) {
+        this(port, null, filters);
+    }
+
+    public RPCServer(int port, final RPCServerOption option, List<Filter> filters) {
         this.port = port;
         // use default conf otherwise use specified one
         if (option != null) {
@@ -55,6 +67,7 @@ public class RPCServer {
         } else {
             rpcServerOption = new RPCServerOption();
         }
+        this.filters = filters;
 
         bootstrap = new ServerBootstrap();
         if (Epoll.isAvailable()) {
@@ -90,7 +103,7 @@ public class RPCServer {
                                 rpcServerOption.getKeepAliveTime()));
                 ch.pipeline().addLast("idle", new RPCServerChannelIdleHandler());
                 ch.pipeline().addLast("decoder", new RPCDecoder(true));
-                ch.pipeline().addLast("handler", new RPCServerHandler());
+                ch.pipeline().addLast("handler", new RPCServerHandler(RPCServer.this));
                 ch.pipeline().addLast("encoder", new RPCEncoder<RPCHeader.ResponseHeader>());
             }
         };
@@ -138,6 +151,10 @@ public class RPCServer {
         WorkHandler.getExecutor().shutdown();
     }
 
+    public List<Filter> getFilters() {
+        return filters;
+    }
+
     public static RPCServerOption getRpcServerOption() {
         return rpcServerOption;
     }
@@ -145,4 +162,5 @@ public class RPCServer {
     public static void setRpcServerOption(RPCServerOption rpcServerOption) {
         RPCServer.rpcServerOption = rpcServerOption;
     }
+
 }

@@ -1,17 +1,14 @@
 package com.wenweihu86.rpc.server.handler;
 
-import com.google.protobuf.GeneratedMessageV3;
-import com.google.protobuf.util.JsonFormat;
 import com.wenweihu86.rpc.codec.RPCHeader;
 import com.wenweihu86.rpc.codec.RPCMessage;
+import com.wenweihu86.rpc.filter.chain.FilterChain;
+import com.wenweihu86.rpc.filter.chain.ServerFilterChain;
 import com.wenweihu86.rpc.server.RPCServer;
-import com.wenweihu86.rpc.server.ServiceInfo;
-import com.wenweihu86.rpc.server.ServiceManager;
 import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -41,51 +38,42 @@ public class WorkHandler {
     public static class WorkTask implements Runnable {
         private RPCMessage<RPCHeader.RequestHeader> request;
         private ChannelHandlerContext ctx;
+        private RPCServer rpcServer;
 
-        public WorkTask(ChannelHandlerContext ctx, RPCMessage<RPCHeader.RequestHeader> request) {
+        public WorkTask(ChannelHandlerContext ctx,
+                        RPCMessage<RPCHeader.RequestHeader> request,
+                        RPCServer rpcServer) {
             this.request = request;
             this.ctx = ctx;
+            this.rpcServer = rpcServer;
         }
 
         @Override
         public void run() {
             long startTime = System.currentTimeMillis();
-
-            RPCHeader.RequestHeader requestHeader = request.getHeader();
-            String serviceName = requestHeader.getServiceName();
-            String methodName = requestHeader.getMethodName();
-            ServiceManager serviceManager = ServiceManager.getInstance();
-            ServiceInfo serviceInfo = serviceManager.getService(serviceName, methodName);
-            if (serviceInfo == null) {
-                LOG.error("can not find service info, serviceName={}, methodName={}", serviceInfo, methodName);
-                throw new RuntimeException("can not find service info");
-            }
-            Class requestClass = serviceInfo.getRequestClass();
+            RPCMessage<RPCHeader.ResponseHeader> fullResponse = new RPCMessage<>();
             try {
-                Method decodeMethod = requestClass.getMethod("parseFrom", byte[].class);
-                GeneratedMessageV3 protoRequest = (GeneratedMessageV3) decodeMethod.invoke(
-                        requestClass, request.getBody());
-                GeneratedMessageV3 protoResponse =
-                        (GeneratedMessageV3) serviceInfo.getMethod().invoke(serviceInfo.getService(), protoRequest);
-                Method encodeMethod = protoResponse.getClass().getMethod("toByteArray");
-                byte[] responseBody = (byte[]) encodeMethod.invoke(protoResponse);
-                RPCMessage<RPCHeader.ResponseHeader> response = new RPCMessage<>();
-                RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
-                        .setLogId(requestHeader.getLogId())
-                        .setResCode(RPCHeader.ResCode.RES_SUCCESS)
-                        .setResMsg("").build();
-                response.setHeader(responseHeader);
-                response.setBody(responseBody);
-                ctx.channel().writeAndFlush(response);
-
-                long endTime = System.currentTimeMillis();
-                JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
-                LOG.info("elapse={}ms service={} method={} logId={} request={} response={}",
-                        endTime - startTime, serviceName, methodName, requestHeader.getLogId(),
-                        printer.print(protoRequest),
-                        printer.print(protoResponse));
+                FilterChain filterChain = new ServerFilterChain(rpcServer.getFilters());
+                filterChain.doFilter(request, fullResponse);
             } catch (Exception ex) {
-                throw new RuntimeException(ex.getMessage());
+                LOG.warn("server run failed, exception={}", ex.getMessage());
+                RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
+                        .setLogId(request.getHeader().getLogId())
+                        .setResCode(RPCHeader.ResCode.RES_FAIL)
+                        .setResMsg(ex.getMessage()).build();
+                fullResponse.setHeader(responseHeader);
+            }
+            ctx.channel().writeAndFlush(fullResponse);
+
+            long endTime = System.currentTimeMillis();
+            try {
+                RPCHeader.RequestHeader requestHeader = request.getHeader();
+//                JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
+                LOG.info("elapseMS={} service={} method={} logId={}",
+                        endTime - startTime, requestHeader.getServiceName(),
+                        requestHeader.getMethodName(), requestHeader.getLogId());
+            } catch (Exception ex) {
+                LOG.warn("log exception={}", ex.getMessage());
             }
         }
 

@@ -4,7 +4,7 @@
 -DLog4jContextSelector=org.apache.logging.log4j.core.async.AsyncLoggerContextSelector
      to make all loggers asynchronous. -->
 
-<Configuration status="WARN">
+<Configuration status="INFO">
     <Appenders>
 
         <Console name="Console" target="SYSTEM_OUT">

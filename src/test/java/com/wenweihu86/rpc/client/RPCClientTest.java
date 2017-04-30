@@ -4,6 +4,11 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.wenweihu86.rpc.api.Sample;
 import com.wenweihu86.rpc.api.SampleService;
+import com.wenweihu86.rpc.filter.ClientCustomParamFilter;
+import com.wenweihu86.rpc.filter.Filter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by wenweihu86 on 2017/4/26.
@@ -19,7 +24,11 @@ public class RPCClientTest {
         if (args.length == 1) {
             ipPorts = args[0];
         }
-        RPCClient rpcClient = new RPCClient(ipPorts, clientOption);
+
+        List<Filter> filters = new ArrayList<>();
+        ClientCustomParamFilter customParamFilter = new ClientCustomParamFilter();
+        filters.add(customParamFilter);
+        RPCClient rpcClient = new RPCClient(ipPorts, clientOption, filters);
 
         // build request
         Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
