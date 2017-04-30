@@ -71,4 +71,5 @@ public class RPCClientTest {
         };
         rpcClient.asyncCall("SampleService.sampleRPC", request, callback);
     }
+
 }

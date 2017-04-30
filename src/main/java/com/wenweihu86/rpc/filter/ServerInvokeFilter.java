@@ -35,20 +35,20 @@ public class ServerInvokeFilter implements Filter {
             Class requestClass = serviceInfo.getRequestClass();
             try {
                 Method decodeMethod = requestClass.getMethod("parseFrom", byte[].class);
-                GeneratedMessageV3 protoRequest = (GeneratedMessageV3) decodeMethod.invoke(
+                GeneratedMessageV3 requestBodyMessage = (GeneratedMessageV3) decodeMethod.invoke(
                         requestClass, fullRequest.getBody());
-                GeneratedMessageV3 protoResponse =
+                GeneratedMessageV3 responseBodyMessage =
                         (GeneratedMessageV3) serviceInfo.getMethod().invoke(
-                                serviceInfo.getService(), protoRequest);
-                Method encodeMethod = protoResponse.getClass().getMethod("toByteArray");
-                byte[] responseBody = (byte[]) encodeMethod.invoke(protoResponse);
+                                serviceInfo.getService(), requestBodyMessage);
+                Method encodeMethod = responseBodyMessage.getClass().getMethod("toByteArray");
+                byte[] responseBody = (byte[]) encodeMethod.invoke(responseBodyMessage);
                 RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
                         .setLogId(requestHeader.getLogId())
                         .setResCode(RPCHeader.ResCode.RES_SUCCESS)
                         .setResMsg("").build();
                 fullResponse.setHeader(responseHeader);
                 fullResponse.setBody(responseBody);
-                fullResponse.setBodyMessage(protoResponse);
+                fullResponse.setBodyMessage(responseBodyMessage);
             } catch (Exception ex) {
                 throw new RuntimeException(ex.getMessage());
             }

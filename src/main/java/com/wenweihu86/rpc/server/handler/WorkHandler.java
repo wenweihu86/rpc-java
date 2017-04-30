@@ -36,14 +36,14 @@ public class WorkHandler {
     }
 
     public static class WorkTask implements Runnable {
-        private RPCMessage<RPCHeader.RequestHeader> request;
+        private RPCMessage<RPCHeader.RequestHeader> fullRequest;
         private ChannelHandlerContext ctx;
         private RPCServer rpcServer;
 
         public WorkTask(ChannelHandlerContext ctx,
-                        RPCMessage<RPCHeader.RequestHeader> request,
+                        RPCMessage<RPCHeader.RequestHeader> fullRequest,
                         RPCServer rpcServer) {
-            this.request = request;
+            this.fullRequest = fullRequest;
             this.ctx = ctx;
             this.rpcServer = rpcServer;
         }
@@ -54,11 +54,11 @@ public class WorkHandler {
             RPCMessage<RPCHeader.ResponseHeader> fullResponse = new RPCMessage<>();
             try {
                 FilterChain filterChain = new ServerFilterChain(rpcServer.getFilters());
-                filterChain.doFilter(request, fullResponse);
+                filterChain.doFilter(fullRequest, fullResponse);
             } catch (Exception ex) {
                 LOG.warn("server run failed, exception={}", ex.getMessage());
                 RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
-                        .setLogId(request.getHeader().getLogId())
+                        .setLogId(fullRequest.getHeader().getLogId())
                         .setResCode(RPCHeader.ResCode.RES_FAIL)
                         .setResMsg(ex.getMessage()).build();
                 fullResponse.setHeader(responseHeader);
@@ -67,8 +67,7 @@ public class WorkHandler {
 
             long endTime = System.currentTimeMillis();
             try {
-                RPCHeader.RequestHeader requestHeader = request.getHeader();
-//                JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
+                RPCHeader.RequestHeader requestHeader = fullRequest.getHeader();
                 LOG.info("elapseMS={} service={} method={} logId={}",
                         endTime - startTime, requestHeader.getServiceName(),
                         requestHeader.getMethodName(), requestHeader.getLogId());
