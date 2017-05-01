@@ -54,7 +54,7 @@ public class RPCClientOption {
      * max ilde connection size
      * @see GenericObjectPool#getMaxIdle()
      */
-    private int maxIdleSize = 5;
+    private int maxIdleSize = 8;
 
     /**
      * min idle connection size
@@ -66,13 +66,13 @@ public class RPCClientOption {
      * max connection size that connection pool can make
      * @see GenericObjectPool#getMaxTotal()
      */
-    private int threadPoolSize = 20;
+    private int threadPoolSize = -1;
 
     /**
      * max wait time when borrow connection from pool, in milliseconds
      * @see GenericObjectPool#getMaxWaitMillis()
      */
-    private int maxWaitMillis = 200;
+    private int maxWaitMillis = -1;
 
     // The min evictable idle time
     private int minEvictableIdleTimeMillis = 1000 * 60 * 2;

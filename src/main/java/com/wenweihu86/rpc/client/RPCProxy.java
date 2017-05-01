@@ -18,6 +18,7 @@ import java.util.UUID;
 /**
  * Created by wenweihu86 on 2017/4/25.
  */
+@SuppressWarnings("unchecked")
 public class RPCProxy implements MethodInterceptor {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCProxy.class);
@@ -37,7 +38,6 @@ public class RPCProxy implements MethodInterceptor {
 
     public Object intercept(Object obj, Method method, Object[] args,
                             MethodProxy proxy) throws Throwable {
-        long startTime = System.currentTimeMillis();
 
         final String logId = UUID.randomUUID().toString();
         final String serviceName = method.getDeclaringClass().getSimpleName();
@@ -49,12 +49,6 @@ public class RPCProxy implements MethodInterceptor {
         FilterChain filterChain = new ClientFilterChain(rpcClient.getFilters(), rpcClient);
         filterChain.doFilter(fullRequest, fullResponse);
 
-        long endTime = System.currentTimeMillis();
-        JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
-        LOG.info("elapse={}ms service={} method={} logId={} request={} response={}",
-                endTime - startTime, serviceName, methodName, logId,
-                printer.print((MessageOrBuilder) args[0]),
-                printer.print((MessageOrBuilder) fullResponse.getBodyMessage()));
         return fullResponse.getBodyMessage();
     }
 

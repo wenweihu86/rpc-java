@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 
+@SuppressWarnings("unchecked")
 public class RPCClientHandler extends SimpleChannelInboundHandler<RPCMessage<RPCHeader.ResponseHeader>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCClientHandler.class);
@@ -22,7 +23,7 @@ public class RPCClientHandler extends SimpleChannelInboundHandler<RPCMessage<RPC
         String logId = fullResponse.getHeader().getLogId();
         RPCFuture future = RPCClient.getRPCFuture(logId);
         if (future == null) {
-            LOG.warn("receive msg from server but no request found, logId={}", logId);
+            LOG.debug("receive msg from server but no request found, logId={}", logId);
             return;
         }
         RPCClient.removeRPCFuture(logId);

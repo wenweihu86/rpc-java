@@ -11,6 +11,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("unchecked")
 public class RPCFuture<T> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCFuture.class);
@@ -75,6 +76,10 @@ public class RPCFuture<T> {
             fullResponse = newResponse(requestHeader.getLogId(),
                     RPCHeader.ResCode.RES_FAIL, error.getMessage());
         }
+        if (fullResponse == null) {
+            fullResponse = newResponse(fullRequest.getHeader().getLogId(),
+                    RPCHeader.ResCode.RES_FAIL, "time out");
+        }
         return fullResponse;
     }
 
@@ -87,7 +92,6 @@ public class RPCFuture<T> {
                     fullResponse = newResponse(requestHeader.getLogId(),
                             RPCHeader.ResCode.RES_FAIL, error.getMessage());
                 }
-                return fullResponse;
             } else {
                 LOG.warn("sync call time out");
                 fullResponse = newResponse(requestHeader.getLogId(),
@@ -96,6 +100,10 @@ public class RPCFuture<T> {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.warn("sync call is interrupted, {}", e);
+            fullResponse = newResponse(requestHeader.getLogId(),
+                    RPCHeader.ResCode.RES_FAIL, "time out");
+        }
+        if (fullResponse == null) {
             fullResponse = newResponse(requestHeader.getLogId(),
                     RPCHeader.ResCode.RES_FAIL, "time out");
         }

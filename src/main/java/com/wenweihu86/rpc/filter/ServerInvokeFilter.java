@@ -14,6 +14,7 @@ import java.lang.reflect.Method;
 /**
  * Created by wenweihu86 on 2017/4/30.
  */
+@SuppressWarnings("unchecked")
 public class ServerInvokeFilter implements Filter {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServerInvokeFilter.class);

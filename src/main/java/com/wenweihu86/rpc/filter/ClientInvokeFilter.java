@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by wenweihu86 on 2017/4/30.
  */
+@SuppressWarnings("unchecked")
 public class ClientInvokeFilter extends AbstractClientFilter {
 
     private RPCClient rpcClient;

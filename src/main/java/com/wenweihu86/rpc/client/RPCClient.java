@@ -42,6 +42,7 @@ import com.wenweihu86.rpc.codec.RPCEncoder;
 /**
  * Created by wenweihu86 on 2017/4/25.
  */
+@SuppressWarnings("unchecked")
 public class RPCClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCClient.class);
@@ -165,7 +166,7 @@ public class RPCClient {
                                 logId, serviceName, methodName);
                         rpcFuture.timeout();
                     } else {
-                        LOG.warn("request logId={} not found", logId);
+                        LOG.debug("request logId={} not found", logId);
                     }
                 }
             }, readTimeout, TimeUnit.MILLISECONDS);
@@ -186,7 +187,7 @@ public class RPCClient {
                 @Override
                 public void operationComplete(ChannelFuture channelFuture) throws Exception {
                     if (channelFuture.isSuccess()) {
-                        LOG.info("Connection {} is established", channelFuture.channel());
+                        LOG.debug("Connection {} is established", channelFuture.channel());
                     } else {
                         LOG.warn(String.format("Connection get failed on {} due to {}",
                                 channelFuture.cause().getMessage(), channelFuture.cause()));
@@ -195,7 +196,7 @@ public class RPCClient {
             });
             future.awaitUninterruptibly();
             if (future.isSuccess()) {
-                LOG.info("connect {}:{} success", ip, port);
+                LOG.debug("connect {}:{} success", ip, port);
                 return future.channel();
             } else {
                 LOG.warn("connect {}:{} failed", ip, port);
@@ -254,8 +255,10 @@ public class RPCClient {
                     || !connection.getChannel().isActive()) {
                 if (currentTry < maxTryNum - 1) {
                     currentTry++;
+                    connectionPool.returnConnection(connection);
                     continue;
                 } else {
+                    connectionPool.returnConnection(connection);
                     throw new RuntimeException("connect failed");
                 }
             }
@@ -263,6 +266,7 @@ public class RPCClient {
             LOG.debug("channel isActive={}", channel.isActive());
             connection.setChannel(channel);
             channel.writeAndFlush(fullRequest);
+            connectionPool.returnConnection(connection);
             break;
         }
     }
