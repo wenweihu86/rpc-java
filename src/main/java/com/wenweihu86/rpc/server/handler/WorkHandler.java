@@ -9,10 +9,8 @@ import io.netty.channel.ChannelHandlerContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -28,7 +26,8 @@ public class WorkHandler {
         executor = new ThreadPoolExecutor(
                 RPCServer.getRpcServerOption().getWorkThreadNum(),
                 RPCServer.getRpcServerOption().getWorkThreadNum(),
-                60L, TimeUnit.SECONDS, blockingQueue);
+                60L, TimeUnit.SECONDS, blockingQueue,
+                new CustomThreadFactory("worker-thread"));
     }
 
     public static ThreadPoolExecutor getExecutor() {
@@ -74,6 +73,29 @@ public class WorkHandler {
             } catch (Exception ex) {
                 LOG.warn("log exception={}", ex.getMessage());
             }
+        }
+
+    }
+
+    public static class CustomThreadFactory implements ThreadFactory {
+        private AtomicInteger threadNumber = new AtomicInteger(1);
+        private String namePrefix;
+        private ThreadGroup group;
+
+        public CustomThreadFactory(String namePrefix) {
+            SecurityManager s = System.getSecurityManager();
+            this.group = (s != null) ? s.getThreadGroup() :
+                    Thread.currentThread().getThreadGroup();
+            this.namePrefix = namePrefix + "-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(group, r,
+                    namePrefix + threadNumber.getAndIncrement(),
+                    0);
+            t.setDaemon(true);
+            t.setPriority(Thread.NORM_PRIORITY);
+            return t;
         }
 
     }

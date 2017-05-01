@@ -162,7 +162,7 @@ public class RPCClient {
                 public void run() {
                     RPCFuture rpcFuture = RPCClient.removeRPCFuture(logId);
                     if (rpcFuture != null) {
-                        LOG.warn("request timeout, logId={}, service={}, method={}",
+                        LOG.debug("request timeout, logId={}, service={}, method={}",
                                 logId, serviceName, methodName);
                         rpcFuture.timeout();
                     } else {
