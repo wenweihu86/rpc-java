@@ -43,7 +43,10 @@ public class BenchmarkTest {
         }
 
         public void run() {
+            int currentRequestNum = 0;
+            int maxRequestNum = 10000;
             while (true) {
+                long beginTime = System.currentTimeMillis();
                 // build request
                 Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
                         .setA(1)
@@ -53,8 +56,15 @@ public class BenchmarkTest {
                 // sync call
                 SampleService sampleService = RPCProxy.getProxy(rpcClient, SampleService.class);
                 Sample.SampleResponse response = sampleService.sampleRPC(request);
+                long endTime = System.currentTimeMillis();
                 if (response != null) {
+                    currentRequestNum++;
                     totalRequestNum++;
+                    if (currentRequestNum == maxRequestNum) {
+                        float averageTime = ((float) (endTime - beginTime)) % maxRequestNum;
+                        System.out.println("average elpaseMs=" + averageTime);
+                        currentRequestNum = 0;
+                    }
                 } else {
                     System.out.println("server error");
                 }
