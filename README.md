@@ -1,8 +1,6 @@
 # 背景
-rpc-java是一个基于netty4和protobuf3的java rpc框架。
-rpc-java并没有引入与spring集成相关功能，也没有引入注册中心，
-所以不适合于SOA场景（当然如果有感兴趣的话，也可以加上对SOA的相关支持）。
-rpc-java的主要使用场景是高并发server系统，如分布式消息队列、分布式存储系统等。
+rpc-java是一个基于netty4和protobuf3的java rpc框架，
+主要使用场景是高并发server系统，如分布式消息队列、分布式存储系统等。
 
 # 通信协议
 客户端与服务端交互的协议格式为：<br>
