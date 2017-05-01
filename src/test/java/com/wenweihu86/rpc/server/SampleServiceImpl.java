@@ -4,7 +4,7 @@ import com.wenweihu86.rpc.api.Sample;
 import com.wenweihu86.rpc.api.SampleService;
 
 /**
- * Created by baidu on 2017/4/25.
+ * Created by wenweihu86 on 2017/4/25.
  */
 public class SampleServiceImpl implements SampleService {
 
