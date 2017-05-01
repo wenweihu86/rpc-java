@@ -14,6 +14,7 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -75,16 +76,16 @@ public class RPCServer {
             workerGroup = new EpollEventLoopGroup(rpcServerOption.getIOThreadNum());
             ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
             ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
+            bootstrap.channel(EpollServerSocketChannel.class);
         } else {
             bossGroup = new NioEventLoopGroup(rpcServerOption.getAcceptorThreadNum());
             workerGroup = new NioEventLoopGroup(rpcServerOption.getIOThreadNum());
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
+            bootstrap.channel(NioServerSocketChannel.class);
         }
 
-        bootstrap.channel(NioServerSocketChannel.class);
         bootstrap.option(ChannelOption.SO_BACKLOG, rpcServerOption.getBacklog());
-
         bootstrap.childOption(ChannelOption.SO_KEEPALIVE, rpcServerOption.isKeepAlive());
         bootstrap.childOption(ChannelOption.TCP_NODELAY, rpcServerOption.isTCPNoDelay());
         bootstrap.childOption(ChannelOption.SO_REUSEADDR, true);

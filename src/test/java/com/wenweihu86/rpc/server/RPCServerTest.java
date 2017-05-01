@@ -17,8 +17,8 @@ public class RPCServerTest {
         }
 
         List<Filter> filters = new ArrayList<>();
-        ServerCustomParamFilter filter = new ServerCustomParamFilter();
-        filters.add(filter);
+//        ServerCustomParamFilter filter = new ServerCustomParamFilter();
+//        filters.add(filter);
         RPCServer rpcServer = new RPCServer(port, filters);
         rpcServer.registerService(new SampleServiceImpl());
         rpcServer.start();
