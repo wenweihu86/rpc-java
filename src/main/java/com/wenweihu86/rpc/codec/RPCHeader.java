@@ -224,50 +224,90 @@ public final class RPCHeader {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string serviceName = 1;</code>
+     * <pre>
+     * 服务名或接口名
+     * </pre>
+     *
+     * <code>optional string service_name = 1;</code>
      */
     java.lang.String getServiceName();
     /**
-     * <code>optional string serviceName = 1;</code>
+     * <pre>
+     * 服务名或接口名
+     * </pre>
+     *
+     * <code>optional string service_name = 1;</code>
      */
     com.google.protobuf.ByteString
         getServiceNameBytes();
 
     /**
-     * <code>optional string methodName = 2;</code>
+     * <pre>
+     * 方法名
+     * </pre>
+     *
+     * <code>optional string method_name = 2;</code>
      */
     java.lang.String getMethodName();
     /**
-     * <code>optional string methodName = 2;</code>
+     * <pre>
+     * 方法名
+     * </pre>
+     *
+     * <code>optional string method_name = 2;</code>
      */
     com.google.protobuf.ByteString
         getMethodNameBytes();
 
     /**
-     * <code>optional string logId = 3;</code>
+     * <pre>
+     * 日志id
+     * </pre>
+     *
+     * <code>optional string log_id = 3;</code>
      */
     java.lang.String getLogId();
     /**
-     * <code>optional string logId = 3;</code>
+     * <pre>
+     * 日志id
+     * </pre>
+     *
+     * <code>optional string log_id = 3;</code>
      */
     com.google.protobuf.ByteString
         getLogIdBytes();
 
     /**
-     * <code>optional .codec.CompressType compressType = 4;</code>
+     * <pre>
+     * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+     * </pre>
+     *
+     * <code>optional .codec.CompressType compress_type = 4;</code>
      */
     int getCompressTypeValue();
     /**
-     * <code>optional .codec.CompressType compressType = 4;</code>
+     * <pre>
+     * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+     * </pre>
+     *
+     * <code>optional .codec.CompressType compress_type = 4;</code>
      */
     com.wenweihu86.rpc.codec.RPCHeader.CompressType getCompressType();
 
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
     int getCustomParamCount();
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
     boolean containsCustomParam(
         java.lang.String key);
@@ -278,25 +318,41 @@ public final class RPCHeader {
     java.util.Map<java.lang.String, java.lang.String>
     getCustomParam();
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
     java.util.Map<java.lang.String, java.lang.String>
     getCustomParamMap();
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
 
     java.lang.String getCustomParamOrDefault(
         java.lang.String key,
         java.lang.String defaultValue);
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
 
     java.lang.String getCustomParamOrThrow(
         java.lang.String key);
   }
   /**
+   * <pre>
+   * 请求Header
+   * </pre>
+   *
    * Protobuf type {@code codec.RequestHeader}
    */
   public  static final class RequestHeader extends
@@ -411,10 +467,14 @@ public final class RPCHeader {
     }
 
     private int bitField0_;
-    public static final int SERVICENAME_FIELD_NUMBER = 1;
+    public static final int SERVICE_NAME_FIELD_NUMBER = 1;
     private volatile java.lang.Object serviceName_;
     /**
-     * <code>optional string serviceName = 1;</code>
+     * <pre>
+     * 服务名或接口名
+     * </pre>
+     *
+     * <code>optional string service_name = 1;</code>
      */
     public java.lang.String getServiceName() {
       java.lang.Object ref = serviceName_;
@@ -429,7 +489,11 @@ public final class RPCHeader {
       }
     }
     /**
-     * <code>optional string serviceName = 1;</code>
+     * <pre>
+     * 服务名或接口名
+     * </pre>
+     *
+     * <code>optional string service_name = 1;</code>
      */
     public com.google.protobuf.ByteString
         getServiceNameBytes() {
@@ -445,10 +509,14 @@ public final class RPCHeader {
       }
     }
 
-    public static final int METHODNAME_FIELD_NUMBER = 2;
+    public static final int METHOD_NAME_FIELD_NUMBER = 2;
     private volatile java.lang.Object methodName_;
     /**
-     * <code>optional string methodName = 2;</code>
+     * <pre>
+     * 方法名
+     * </pre>
+     *
+     * <code>optional string method_name = 2;</code>
      */
     public java.lang.String getMethodName() {
       java.lang.Object ref = methodName_;
@@ -463,7 +531,11 @@ public final class RPCHeader {
       }
     }
     /**
-     * <code>optional string methodName = 2;</code>
+     * <pre>
+     * 方法名
+     * </pre>
+     *
+     * <code>optional string method_name = 2;</code>
      */
     public com.google.protobuf.ByteString
         getMethodNameBytes() {
@@ -479,10 +551,14 @@ public final class RPCHeader {
       }
     }
 
-    public static final int LOGID_FIELD_NUMBER = 3;
+    public static final int LOG_ID_FIELD_NUMBER = 3;
     private volatile java.lang.Object logId_;
     /**
-     * <code>optional string logId = 3;</code>
+     * <pre>
+     * 日志id
+     * </pre>
+     *
+     * <code>optional string log_id = 3;</code>
      */
     public java.lang.String getLogId() {
       java.lang.Object ref = logId_;
@@ -497,7 +573,11 @@ public final class RPCHeader {
       }
     }
     /**
-     * <code>optional string logId = 3;</code>
+     * <pre>
+     * 日志id
+     * </pre>
+     *
+     * <code>optional string log_id = 3;</code>
      */
     public com.google.protobuf.ByteString
         getLogIdBytes() {
@@ -513,23 +593,31 @@ public final class RPCHeader {
       }
     }
 
-    public static final int COMPRESSTYPE_FIELD_NUMBER = 4;
+    public static final int COMPRESS_TYPE_FIELD_NUMBER = 4;
     private int compressType_;
     /**
-     * <code>optional .codec.CompressType compressType = 4;</code>
+     * <pre>
+     * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+     * </pre>
+     *
+     * <code>optional .codec.CompressType compress_type = 4;</code>
      */
     public int getCompressTypeValue() {
       return compressType_;
     }
     /**
-     * <code>optional .codec.CompressType compressType = 4;</code>
+     * <pre>
+     * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+     * </pre>
+     *
+     * <code>optional .codec.CompressType compress_type = 4;</code>
      */
     public com.wenweihu86.rpc.codec.RPCHeader.CompressType getCompressType() {
       com.wenweihu86.rpc.codec.RPCHeader.CompressType result = com.wenweihu86.rpc.codec.RPCHeader.CompressType.valueOf(compressType_);
       return result == null ? com.wenweihu86.rpc.codec.RPCHeader.CompressType.UNRECOGNIZED : result;
     }
 
-    public static final int CUSTOMPARAM_FIELD_NUMBER = 5;
+    public static final int CUSTOM_PARAM_FIELD_NUMBER = 5;
     private static final class CustomParamDefaultEntryHolder {
       static final com.google.protobuf.MapEntry<
           java.lang.String, java.lang.String> defaultEntry =
@@ -556,7 +644,11 @@ public final class RPCHeader {
       return internalGetCustomParam().getMap().size();
     }
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
 
     public boolean containsCustomParam(
@@ -572,14 +664,22 @@ public final class RPCHeader {
       return getCustomParamMap();
     }
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
 
     public java.util.Map<java.lang.String, java.lang.String> getCustomParamMap() {
       return internalGetCustomParam().getMap();
     }
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
 
     public java.lang.String getCustomParamOrDefault(
@@ -591,7 +691,11 @@ public final class RPCHeader {
       return map.containsKey(key) ? map.get(key) : defaultValue;
     }
     /**
-     * <code>map&lt;string, string&gt; customParam = 5;</code>
+     * <pre>
+     * 用户自定义参数
+     * </pre>
+     *
+     * <code>map&lt;string, string&gt; custom_param = 5;</code>
      */
 
     public java.lang.String getCustomParamOrThrow(
@@ -700,16 +804,16 @@ public final class RPCHeader {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
-      hash = (37 * hash) + SERVICENAME_FIELD_NUMBER;
+      hash = (37 * hash) + SERVICE_NAME_FIELD_NUMBER;
       hash = (53 * hash) + getServiceName().hashCode();
-      hash = (37 * hash) + METHODNAME_FIELD_NUMBER;
+      hash = (37 * hash) + METHOD_NAME_FIELD_NUMBER;
       hash = (53 * hash) + getMethodName().hashCode();
-      hash = (37 * hash) + LOGID_FIELD_NUMBER;
+      hash = (37 * hash) + LOG_ID_FIELD_NUMBER;
       hash = (53 * hash) + getLogId().hashCode();
-      hash = (37 * hash) + COMPRESSTYPE_FIELD_NUMBER;
+      hash = (37 * hash) + COMPRESS_TYPE_FIELD_NUMBER;
       hash = (53 * hash) + compressType_;
       if (!internalGetCustomParam().getMap().isEmpty()) {
-        hash = (37 * hash) + CUSTOMPARAM_FIELD_NUMBER;
+        hash = (37 * hash) + CUSTOM_PARAM_FIELD_NUMBER;
         hash = (53 * hash) + internalGetCustomParam().hashCode();
       }
       hash = (29 * hash) + unknownFields.hashCode();
@@ -795,6 +899,10 @@ public final class RPCHeader {
       return builder;
     }
     /**
+     * <pre>
+     * 请求Header
+     * </pre>
+     *
      * Protobuf type {@code codec.RequestHeader}
      */
     public static final class Builder extends
@@ -979,7 +1087,11 @@ public final class RPCHeader {
 
       private java.lang.Object serviceName_ = "";
       /**
-       * <code>optional string serviceName = 1;</code>
+       * <pre>
+       * 服务名或接口名
+       * </pre>
+       *
+       * <code>optional string service_name = 1;</code>
        */
       public java.lang.String getServiceName() {
         java.lang.Object ref = serviceName_;
@@ -994,7 +1106,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string serviceName = 1;</code>
+       * <pre>
+       * 服务名或接口名
+       * </pre>
+       *
+       * <code>optional string service_name = 1;</code>
        */
       public com.google.protobuf.ByteString
           getServiceNameBytes() {
@@ -1010,7 +1126,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string serviceName = 1;</code>
+       * <pre>
+       * 服务名或接口名
+       * </pre>
+       *
+       * <code>optional string service_name = 1;</code>
        */
       public Builder setServiceName(
           java.lang.String value) {
@@ -1023,7 +1143,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string serviceName = 1;</code>
+       * <pre>
+       * 服务名或接口名
+       * </pre>
+       *
+       * <code>optional string service_name = 1;</code>
        */
       public Builder clearServiceName() {
         
@@ -1032,7 +1156,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string serviceName = 1;</code>
+       * <pre>
+       * 服务名或接口名
+       * </pre>
+       *
+       * <code>optional string service_name = 1;</code>
        */
       public Builder setServiceNameBytes(
           com.google.protobuf.ByteString value) {
@@ -1048,7 +1176,11 @@ public final class RPCHeader {
 
       private java.lang.Object methodName_ = "";
       /**
-       * <code>optional string methodName = 2;</code>
+       * <pre>
+       * 方法名
+       * </pre>
+       *
+       * <code>optional string method_name = 2;</code>
        */
       public java.lang.String getMethodName() {
         java.lang.Object ref = methodName_;
@@ -1063,7 +1195,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string methodName = 2;</code>
+       * <pre>
+       * 方法名
+       * </pre>
+       *
+       * <code>optional string method_name = 2;</code>
        */
       public com.google.protobuf.ByteString
           getMethodNameBytes() {
@@ -1079,7 +1215,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string methodName = 2;</code>
+       * <pre>
+       * 方法名
+       * </pre>
+       *
+       * <code>optional string method_name = 2;</code>
        */
       public Builder setMethodName(
           java.lang.String value) {
@@ -1092,7 +1232,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string methodName = 2;</code>
+       * <pre>
+       * 方法名
+       * </pre>
+       *
+       * <code>optional string method_name = 2;</code>
        */
       public Builder clearMethodName() {
         
@@ -1101,7 +1245,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string methodName = 2;</code>
+       * <pre>
+       * 方法名
+       * </pre>
+       *
+       * <code>optional string method_name = 2;</code>
        */
       public Builder setMethodNameBytes(
           com.google.protobuf.ByteString value) {
@@ -1117,7 +1265,11 @@ public final class RPCHeader {
 
       private java.lang.Object logId_ = "";
       /**
-       * <code>optional string logId = 3;</code>
+       * <pre>
+       * 日志id
+       * </pre>
+       *
+       * <code>optional string log_id = 3;</code>
        */
       public java.lang.String getLogId() {
         java.lang.Object ref = logId_;
@@ -1132,7 +1284,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string logId = 3;</code>
+       * <pre>
+       * 日志id
+       * </pre>
+       *
+       * <code>optional string log_id = 3;</code>
        */
       public com.google.protobuf.ByteString
           getLogIdBytes() {
@@ -1148,7 +1304,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string logId = 3;</code>
+       * <pre>
+       * 日志id
+       * </pre>
+       *
+       * <code>optional string log_id = 3;</code>
        */
       public Builder setLogId(
           java.lang.String value) {
@@ -1161,7 +1321,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string logId = 3;</code>
+       * <pre>
+       * 日志id
+       * </pre>
+       *
+       * <code>optional string log_id = 3;</code>
        */
       public Builder clearLogId() {
         
@@ -1170,7 +1334,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string logId = 3;</code>
+       * <pre>
+       * 日志id
+       * </pre>
+       *
+       * <code>optional string log_id = 3;</code>
        */
       public Builder setLogIdBytes(
           com.google.protobuf.ByteString value) {
@@ -1186,13 +1354,21 @@ public final class RPCHeader {
 
       private int compressType_ = 0;
       /**
-       * <code>optional .codec.CompressType compressType = 4;</code>
+       * <pre>
+       * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+       * </pre>
+       *
+       * <code>optional .codec.CompressType compress_type = 4;</code>
        */
       public int getCompressTypeValue() {
         return compressType_;
       }
       /**
-       * <code>optional .codec.CompressType compressType = 4;</code>
+       * <pre>
+       * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+       * </pre>
+       *
+       * <code>optional .codec.CompressType compress_type = 4;</code>
        */
       public Builder setCompressTypeValue(int value) {
         compressType_ = value;
@@ -1200,14 +1376,22 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional .codec.CompressType compressType = 4;</code>
+       * <pre>
+       * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+       * </pre>
+       *
+       * <code>optional .codec.CompressType compress_type = 4;</code>
        */
       public com.wenweihu86.rpc.codec.RPCHeader.CompressType getCompressType() {
         com.wenweihu86.rpc.codec.RPCHeader.CompressType result = com.wenweihu86.rpc.codec.RPCHeader.CompressType.valueOf(compressType_);
         return result == null ? com.wenweihu86.rpc.codec.RPCHeader.CompressType.UNRECOGNIZED : result;
       }
       /**
-       * <code>optional .codec.CompressType compressType = 4;</code>
+       * <pre>
+       * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+       * </pre>
+       *
+       * <code>optional .codec.CompressType compress_type = 4;</code>
        */
       public Builder setCompressType(com.wenweihu86.rpc.codec.RPCHeader.CompressType value) {
         if (value == null) {
@@ -1219,7 +1403,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional .codec.CompressType compressType = 4;</code>
+       * <pre>
+       * body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
+       * </pre>
+       *
+       * <code>optional .codec.CompressType compress_type = 4;</code>
        */
       public Builder clearCompressType() {
         
@@ -1255,7 +1443,11 @@ public final class RPCHeader {
         return internalGetCustomParam().getMap().size();
       }
       /**
-       * <code>map&lt;string, string&gt; customParam = 5;</code>
+       * <pre>
+       * 用户自定义参数
+       * </pre>
+       *
+       * <code>map&lt;string, string&gt; custom_param = 5;</code>
        */
 
       public boolean containsCustomParam(
@@ -1271,14 +1463,22 @@ public final class RPCHeader {
         return getCustomParamMap();
       }
       /**
-       * <code>map&lt;string, string&gt; customParam = 5;</code>
+       * <pre>
+       * 用户自定义参数
+       * </pre>
+       *
+       * <code>map&lt;string, string&gt; custom_param = 5;</code>
        */
 
       public java.util.Map<java.lang.String, java.lang.String> getCustomParamMap() {
         return internalGetCustomParam().getMap();
       }
       /**
-       * <code>map&lt;string, string&gt; customParam = 5;</code>
+       * <pre>
+       * 用户自定义参数
+       * </pre>
+       *
+       * <code>map&lt;string, string&gt; custom_param = 5;</code>
        */
 
       public java.lang.String getCustomParamOrDefault(
@@ -1290,7 +1490,11 @@ public final class RPCHeader {
         return map.containsKey(key) ? map.get(key) : defaultValue;
       }
       /**
-       * <code>map&lt;string, string&gt; customParam = 5;</code>
+       * <pre>
+       * 用户自定义参数
+       * </pre>
+       *
+       * <code>map&lt;string, string&gt; custom_param = 5;</code>
        */
 
       public java.lang.String getCustomParamOrThrow(
@@ -1309,7 +1513,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; customParam = 5;</code>
+       * <pre>
+       * 用户自定义参数
+       * </pre>
+       *
+       * <code>map&lt;string, string&gt; custom_param = 5;</code>
        */
 
       public Builder removeCustomParam(
@@ -1327,7 +1535,11 @@ public final class RPCHeader {
         return internalGetMutableCustomParam().getMutableMap();
       }
       /**
-       * <code>map&lt;string, string&gt; customParam = 5;</code>
+       * <pre>
+       * 用户自定义参数
+       * </pre>
+       *
+       * <code>map&lt;string, string&gt; custom_param = 5;</code>
        */
       public Builder putCustomParam(
           java.lang.String key,
@@ -1338,7 +1550,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>map&lt;string, string&gt; customParam = 5;</code>
+       * <pre>
+       * 用户自定义参数
+       * </pre>
+       *
+       * <code>map&lt;string, string&gt; custom_param = 5;</code>
        */
 
       public Builder putAllCustomParam(
@@ -1400,35 +1616,63 @@ public final class RPCHeader {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string logId = 1;</code>
+     * <pre>
+     * 请求的logId
+     * </pre>
+     *
+     * <code>optional string log_id = 1;</code>
      */
     java.lang.String getLogId();
     /**
-     * <code>optional string logId = 1;</code>
+     * <pre>
+     * 请求的logId
+     * </pre>
+     *
+     * <code>optional string log_id = 1;</code>
      */
     com.google.protobuf.ByteString
         getLogIdBytes();
 
     /**
-     * <code>optional .codec.ResCode resCode = 2;</code>
+     * <pre>
+     * 返回码，0：成功，1：失败
+     * </pre>
+     *
+     * <code>optional .codec.ResCode res_code = 2;</code>
      */
     int getResCodeValue();
     /**
-     * <code>optional .codec.ResCode resCode = 2;</code>
+     * <pre>
+     * 返回码，0：成功，1：失败
+     * </pre>
+     *
+     * <code>optional .codec.ResCode res_code = 2;</code>
      */
     com.wenweihu86.rpc.codec.RPCHeader.ResCode getResCode();
 
     /**
-     * <code>optional string resMsg = 3;</code>
+     * <pre>
+     * 返回失败时的错误消息
+     * </pre>
+     *
+     * <code>optional string res_msg = 3;</code>
      */
     java.lang.String getResMsg();
     /**
-     * <code>optional string resMsg = 3;</code>
+     * <pre>
+     * 返回失败时的错误消息
+     * </pre>
+     *
+     * <code>optional string res_msg = 3;</code>
      */
     com.google.protobuf.ByteString
         getResMsgBytes();
   }
   /**
+   * <pre>
+   * 响应Header
+   * </pre>
+   *
    * Protobuf type {@code codec.ResponseHeader}
    */
   public  static final class ResponseHeader extends
@@ -1511,10 +1755,14 @@ public final class RPCHeader {
               com.wenweihu86.rpc.codec.RPCHeader.ResponseHeader.class, com.wenweihu86.rpc.codec.RPCHeader.ResponseHeader.Builder.class);
     }
 
-    public static final int LOGID_FIELD_NUMBER = 1;
+    public static final int LOG_ID_FIELD_NUMBER = 1;
     private volatile java.lang.Object logId_;
     /**
-     * <code>optional string logId = 1;</code>
+     * <pre>
+     * 请求的logId
+     * </pre>
+     *
+     * <code>optional string log_id = 1;</code>
      */
     public java.lang.String getLogId() {
       java.lang.Object ref = logId_;
@@ -1529,7 +1777,11 @@ public final class RPCHeader {
       }
     }
     /**
-     * <code>optional string logId = 1;</code>
+     * <pre>
+     * 请求的logId
+     * </pre>
+     *
+     * <code>optional string log_id = 1;</code>
      */
     public com.google.protobuf.ByteString
         getLogIdBytes() {
@@ -1545,26 +1797,38 @@ public final class RPCHeader {
       }
     }
 
-    public static final int RESCODE_FIELD_NUMBER = 2;
+    public static final int RES_CODE_FIELD_NUMBER = 2;
     private int resCode_;
     /**
-     * <code>optional .codec.ResCode resCode = 2;</code>
+     * <pre>
+     * 返回码，0：成功，1：失败
+     * </pre>
+     *
+     * <code>optional .codec.ResCode res_code = 2;</code>
      */
     public int getResCodeValue() {
       return resCode_;
     }
     /**
-     * <code>optional .codec.ResCode resCode = 2;</code>
+     * <pre>
+     * 返回码，0：成功，1：失败
+     * </pre>
+     *
+     * <code>optional .codec.ResCode res_code = 2;</code>
      */
     public com.wenweihu86.rpc.codec.RPCHeader.ResCode getResCode() {
       com.wenweihu86.rpc.codec.RPCHeader.ResCode result = com.wenweihu86.rpc.codec.RPCHeader.ResCode.valueOf(resCode_);
       return result == null ? com.wenweihu86.rpc.codec.RPCHeader.ResCode.UNRECOGNIZED : result;
     }
 
-    public static final int RESMSG_FIELD_NUMBER = 3;
+    public static final int RES_MSG_FIELD_NUMBER = 3;
     private volatile java.lang.Object resMsg_;
     /**
-     * <code>optional string resMsg = 3;</code>
+     * <pre>
+     * 返回失败时的错误消息
+     * </pre>
+     *
+     * <code>optional string res_msg = 3;</code>
      */
     public java.lang.String getResMsg() {
       java.lang.Object ref = resMsg_;
@@ -1579,7 +1843,11 @@ public final class RPCHeader {
       }
     }
     /**
-     * <code>optional string resMsg = 3;</code>
+     * <pre>
+     * 返回失败时的错误消息
+     * </pre>
+     *
+     * <code>optional string res_msg = 3;</code>
      */
     public com.google.protobuf.ByteString
         getResMsgBytes() {
@@ -1664,11 +1932,11 @@ public final class RPCHeader {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
-      hash = (37 * hash) + LOGID_FIELD_NUMBER;
+      hash = (37 * hash) + LOG_ID_FIELD_NUMBER;
       hash = (53 * hash) + getLogId().hashCode();
-      hash = (37 * hash) + RESCODE_FIELD_NUMBER;
+      hash = (37 * hash) + RES_CODE_FIELD_NUMBER;
       hash = (53 * hash) + resCode_;
-      hash = (37 * hash) + RESMSG_FIELD_NUMBER;
+      hash = (37 * hash) + RES_MSG_FIELD_NUMBER;
       hash = (53 * hash) + getResMsg().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
@@ -1753,6 +2021,10 @@ public final class RPCHeader {
       return builder;
     }
     /**
+     * <pre>
+     * 响应Header
+     * </pre>
+     *
      * Protobuf type {@code codec.ResponseHeader}
      */
     public static final class Builder extends
@@ -1899,7 +2171,11 @@ public final class RPCHeader {
 
       private java.lang.Object logId_ = "";
       /**
-       * <code>optional string logId = 1;</code>
+       * <pre>
+       * 请求的logId
+       * </pre>
+       *
+       * <code>optional string log_id = 1;</code>
        */
       public java.lang.String getLogId() {
         java.lang.Object ref = logId_;
@@ -1914,7 +2190,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string logId = 1;</code>
+       * <pre>
+       * 请求的logId
+       * </pre>
+       *
+       * <code>optional string log_id = 1;</code>
        */
       public com.google.protobuf.ByteString
           getLogIdBytes() {
@@ -1930,7 +2210,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string logId = 1;</code>
+       * <pre>
+       * 请求的logId
+       * </pre>
+       *
+       * <code>optional string log_id = 1;</code>
        */
       public Builder setLogId(
           java.lang.String value) {
@@ -1943,7 +2227,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string logId = 1;</code>
+       * <pre>
+       * 请求的logId
+       * </pre>
+       *
+       * <code>optional string log_id = 1;</code>
        */
       public Builder clearLogId() {
         
@@ -1952,7 +2240,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string logId = 1;</code>
+       * <pre>
+       * 请求的logId
+       * </pre>
+       *
+       * <code>optional string log_id = 1;</code>
        */
       public Builder setLogIdBytes(
           com.google.protobuf.ByteString value) {
@@ -1968,13 +2260,21 @@ public final class RPCHeader {
 
       private int resCode_ = 0;
       /**
-       * <code>optional .codec.ResCode resCode = 2;</code>
+       * <pre>
+       * 返回码，0：成功，1：失败
+       * </pre>
+       *
+       * <code>optional .codec.ResCode res_code = 2;</code>
        */
       public int getResCodeValue() {
         return resCode_;
       }
       /**
-       * <code>optional .codec.ResCode resCode = 2;</code>
+       * <pre>
+       * 返回码，0：成功，1：失败
+       * </pre>
+       *
+       * <code>optional .codec.ResCode res_code = 2;</code>
        */
       public Builder setResCodeValue(int value) {
         resCode_ = value;
@@ -1982,14 +2282,22 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional .codec.ResCode resCode = 2;</code>
+       * <pre>
+       * 返回码，0：成功，1：失败
+       * </pre>
+       *
+       * <code>optional .codec.ResCode res_code = 2;</code>
        */
       public com.wenweihu86.rpc.codec.RPCHeader.ResCode getResCode() {
         com.wenweihu86.rpc.codec.RPCHeader.ResCode result = com.wenweihu86.rpc.codec.RPCHeader.ResCode.valueOf(resCode_);
         return result == null ? com.wenweihu86.rpc.codec.RPCHeader.ResCode.UNRECOGNIZED : result;
       }
       /**
-       * <code>optional .codec.ResCode resCode = 2;</code>
+       * <pre>
+       * 返回码，0：成功，1：失败
+       * </pre>
+       *
+       * <code>optional .codec.ResCode res_code = 2;</code>
        */
       public Builder setResCode(com.wenweihu86.rpc.codec.RPCHeader.ResCode value) {
         if (value == null) {
@@ -2001,7 +2309,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional .codec.ResCode resCode = 2;</code>
+       * <pre>
+       * 返回码，0：成功，1：失败
+       * </pre>
+       *
+       * <code>optional .codec.ResCode res_code = 2;</code>
        */
       public Builder clearResCode() {
         
@@ -2012,7 +2324,11 @@ public final class RPCHeader {
 
       private java.lang.Object resMsg_ = "";
       /**
-       * <code>optional string resMsg = 3;</code>
+       * <pre>
+       * 返回失败时的错误消息
+       * </pre>
+       *
+       * <code>optional string res_msg = 3;</code>
        */
       public java.lang.String getResMsg() {
         java.lang.Object ref = resMsg_;
@@ -2027,7 +2343,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string resMsg = 3;</code>
+       * <pre>
+       * 返回失败时的错误消息
+       * </pre>
+       *
+       * <code>optional string res_msg = 3;</code>
        */
       public com.google.protobuf.ByteString
           getResMsgBytes() {
@@ -2043,7 +2363,11 @@ public final class RPCHeader {
         }
       }
       /**
-       * <code>optional string resMsg = 3;</code>
+       * <pre>
+       * 返回失败时的错误消息
+       * </pre>
+       *
+       * <code>optional string res_msg = 3;</code>
        */
       public Builder setResMsg(
           java.lang.String value) {
@@ -2056,7 +2380,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string resMsg = 3;</code>
+       * <pre>
+       * 返回失败时的错误消息
+       * </pre>
+       *
+       * <code>optional string res_msg = 3;</code>
        */
       public Builder clearResMsg() {
         
@@ -2065,7 +2393,11 @@ public final class RPCHeader {
         return this;
       }
       /**
-       * <code>optional string resMsg = 3;</code>
+       * <pre>
+       * 返回失败时的错误消息
+       * </pre>
+       *
+       * <code>optional string res_msg = 3;</code>
        */
       public Builder setResMsgBytes(
           com.google.protobuf.ByteString value) {
@@ -2151,19 +2483,19 @@ public final class RPCHeader {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\020rpc_header.proto\022\005codec\"\342\001\n\rRequestHea" +
-      "der\022\023\n\013serviceName\030\001 \001(\t\022\022\n\nmethodName\030\002" +
-      " \001(\t\022\r\n\005logId\030\003 \001(\t\022)\n\014compressType\030\004 \001(" +
-      "\0162\023.codec.CompressType\022:\n\013customParam\030\005 " +
-      "\003(\0132%.codec.RequestHeader.CustomParamEnt" +
-      "ry\0322\n\020CustomParamEntry\022\013\n\003key\030\001 \001(\t\022\r\n\005v" +
-      "alue\030\002 \001(\t:\0028\001\"P\n\016ResponseHeader\022\r\n\005logI" +
-      "d\030\001 \001(\t\022\037\n\007resCode\030\002 \001(\0162\016.codec.ResCode" +
-      "\022\016\n\006resMsg\030\003 \001(\t*H\n\014CompressType\022\017\n\013COMP" +
-      "RESS_NO\020\000\022\023\n\017COMPRESS_SNAPPY\020\001\022\022\n\016COMPER",
-      "ESS_GZIP\020\002*(\n\007ResCode\022\017\n\013RES_SUCCESS\020\000\022\014" +
-      "\n\010RES_FAIL\020\001B%\n\030com.wenweihu86.rpc.codec" +
-      "B\tRPCHeaderb\006proto3"
+      "\n\020rpc_header.proto\022\005codec\"\347\001\n\rRequestHea" +
+      "der\022\024\n\014service_name\030\001 \001(\t\022\023\n\013method_name" +
+      "\030\002 \001(\t\022\016\n\006log_id\030\003 \001(\t\022*\n\rcompress_type\030" +
+      "\004 \001(\0162\023.codec.CompressType\022;\n\014custom_par" +
+      "am\030\005 \003(\0132%.codec.RequestHeader.CustomPar" +
+      "amEntry\0322\n\020CustomParamEntry\022\013\n\003key\030\001 \001(\t" +
+      "\022\r\n\005value\030\002 \001(\t:\0028\001\"S\n\016ResponseHeader\022\016\n" +
+      "\006log_id\030\001 \001(\t\022 \n\010res_code\030\002 \001(\0162\016.codec." +
+      "ResCode\022\017\n\007res_msg\030\003 \001(\t*H\n\014CompressType" +
+      "\022\017\n\013COMPRESS_NO\020\000\022\023\n\017COMPRESS_SNAPPY\020\001\022\022",
+      "\n\016COMPERESS_GZIP\020\002*(\n\007ResCode\022\017\n\013RES_SUC" +
+      "CESS\020\000\022\014\n\010RES_FAIL\020\001B%\n\030com.wenweihu86.r" +
+      "pc.codecB\tRPCHeaderb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
