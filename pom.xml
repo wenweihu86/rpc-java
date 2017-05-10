@@ -9,6 +9,7 @@
 
     <name>rpc-java</name>
     <url>http://maven.apache.org</url>
+    <description>Just another RPC implementation for Java</description>
 
     <licenses>
         <license>
