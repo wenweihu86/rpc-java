@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 package codec;
-option java_package = "com.wenweihu86.rpc.codec";
+option java_package = "com.github.wenweihu86.rpc.codec";
 option java_outer_classname = "RPCHeader";
 
 enum CompressType {
