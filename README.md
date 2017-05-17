@@ -27,6 +27,14 @@ message ResponseHeader {
 ```
 
 # 使用方法
+## 配置依赖
+```
+<dependency>
+    <groupId>com.github.wenweihu86.rpc</groupId>
+    <artifactId>rpc-java</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
 
 ## 定义api接口
 ### 定义请求和响应的protobuf message结构
