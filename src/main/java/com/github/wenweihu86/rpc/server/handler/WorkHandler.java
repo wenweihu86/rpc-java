@@ -24,8 +24,8 @@ public class WorkHandler {
 
     public static void init() {
         executor = new ThreadPoolExecutor(
-                RPCServer.getRpcServerOption().getWorkThreadNum(),
-                RPCServer.getRpcServerOption().getWorkThreadNum(),
+                RPCServer.getRpcServerOptions().getWorkThreadNum(),
+                RPCServer.getRpcServerOptions().getWorkThreadNum(),
                 60L, TimeUnit.SECONDS, blockingQueue,
                 new CustomThreadFactory("worker-thread"));
     }
@@ -67,7 +67,7 @@ public class WorkHandler {
             long endTime = System.currentTimeMillis();
             try {
                 RPCHeader.RequestHeader requestHeader = fullRequest.getHeader();
-                LOG.info("elapseMS={} service={} method={} logId={}",
+                LOG.debug("elapseMS={} service={} method={} logId={}",
                         endTime - startTime, requestHeader.getServiceName(),
                         requestHeader.getMethodName(), requestHeader.getLogId());
             } catch (Exception ex) {

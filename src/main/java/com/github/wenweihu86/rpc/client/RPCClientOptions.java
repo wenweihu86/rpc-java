@@ -10,7 +10,7 @@ import java.nio.ByteOrder;
 /**
  * Created by wenweihu86 on 2017/4/24.
  */
-public class RPCClientOption {
+public class RPCClientOptions {
 
     private int connectTimeoutMillis = 100;
 

@@ -37,7 +37,7 @@ public class ClientInvokeFilter extends AbstractClientFilter {
                 return;
             }
             RPCMessage<RPCHeader.ResponseHeader> fullResponse2 = future.get(
-                    RPCClient.getRpcClientOption().getReadTimeoutMillis(),
+                    RPCClient.getRpcClientOptions().getReadTimeoutMillis(),
                     TimeUnit.MILLISECONDS);
             fullResponse.copyFrom(fullResponse2);
         } finally {

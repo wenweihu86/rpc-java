@@ -1,7 +1,7 @@
 package com.github.wenweihu86.rpc.client.pool;
 
 import com.github.wenweihu86.rpc.client.RPCClient;
-import com.github.wenweihu86.rpc.client.RPCClientOption;
+import com.github.wenweihu86.rpc.client.RPCClientOptions;
 import org.apache.commons.pool2.PooledObjectFactory;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
@@ -18,17 +18,17 @@ public class ConnectionPool {
     private GenericObjectPool<Connection> pool;
 
     public ConnectionPool(RPCClient rpcClient, String host, int port) {
-        RPCClientOption clientOption = RPCClient.getRpcClientOption();
+        RPCClientOptions clientOptions = RPCClient.getRpcClientOptions();
         GenericObjectPoolConfig config = new GenericObjectPoolConfig();
-        config.setMaxIdle(clientOption.getMaxIdleSize());
-        config.setMinIdle(clientOption.getMinIdleSize());
-        config.setMaxTotal(clientOption.getThreadPoolSize());
-        config.setMaxWaitMillis(clientOption.getMaxWaitMillis());
-        config.setMinEvictableIdleTimeMillis(clientOption.getMinEvictableIdleTimeMillis());
-        config.setTestOnCreate(clientOption.isTestOnCreate());
-        config.setTestOnBorrow(clientOption.isTestOnBorrow());
-        config.setTestOnReturn(clientOption.isTestOnReturn());
-        config.setLifo(clientOption.isLifo());
+        config.setMaxIdle(clientOptions.getMaxIdleSize());
+        config.setMinIdle(clientOptions.getMinIdleSize());
+        config.setMaxTotal(clientOptions.getThreadPoolSize());
+        config.setMaxWaitMillis(clientOptions.getMaxWaitMillis());
+        config.setMinEvictableIdleTimeMillis(clientOptions.getMinEvictableIdleTimeMillis());
+        config.setTestOnCreate(clientOptions.isTestOnCreate());
+        config.setTestOnBorrow(clientOptions.isTestOnBorrow());
+        config.setTestOnReturn(clientOptions.isTestOnReturn());
+        config.setLifo(clientOptions.isLifo());
 
         PooledObjectFactory<Connection> objectFactory = new ConnectionPooledObjectFactory(rpcClient, host, port);
         this.pool = new GenericObjectPool<>(objectFactory, config);

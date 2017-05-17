@@ -48,7 +48,7 @@ public class RPCClient {
     private static final Logger LOG = LoggerFactory.getLogger(RPCClient.class);
 
     private static volatile boolean isInit = false;
-    private static RPCClientOption rpcClientOption;
+    private static RPCClientOptions rpcClientOptions;
     private static Bootstrap bootstrap;
     private static Map<String, RPCFuture> pendingRPC;
     private static ScheduledExecutorService scheduledExecutor;
@@ -56,28 +56,64 @@ public class RPCClient {
     private List<ConnectionPool> connectionPoolList;
     private List<Filter> filters;
 
+    // first group constructor
+    public RPCClient(EndPoint endPoint) {
+        this(endPoint, null, null);
+    }
+
+    public RPCClient(EndPoint endPoint, RPCClientOptions options) {
+        this(endPoint, options, null);
+    }
+
+    public RPCClient(EndPoint endPoint, List<Filter> filters) {
+        this(endPoint, null, filters);
+    }
+
+    public RPCClient(EndPoint endPoint, RPCClientOptions options, List<Filter> filters) {
+        List<EndPoint> endPoints = new ArrayList<>(1);
+        endPoints.add(endPoint);
+        this.init(endPoints, options, filters);
+    }
+
+    // second group constructor
+    public RPCClient(List<EndPoint> endPoints) {
+        this(endPoints, null, null);
+    }
+
+    public RPCClient(List<EndPoint> endPoints, RPCClientOptions option) {
+        this(endPoints, option, null);
+    }
+
+    public RPCClient(List<EndPoint> endPoints, List<Filter> filters) {
+        this(endPoints, null, filters);
+    }
+
+    public RPCClient(List<EndPoint> endPoints, RPCClientOptions option, List<Filter> filters) {
+        this.init(endPoints, option, filters);
+    }
+
+    // third group constructor
+    // the right ipPorts format is 10.1.1.1:8888,10.2.2.2:9999
     public RPCClient(String ipPorts) {
         this(ipPorts, null, null);
     }
 
-    public RPCClient(String ipPorts, RPCClientOption option) {
-        this(ipPorts, option, null);
+    public RPCClient(String ipPorts, RPCClientOptions options) {
+        this(ipPorts, options, null);
     }
 
     public RPCClient(String ipPorts, List<Filter> filters) {
         this(ipPorts, null, filters);
     }
 
-    public RPCClient(String ipPorts, RPCClientOption option, List<Filter> filters) {
-        if (!isInit) {
-            RPCClient.init(option);
-        }
+    public RPCClient(String ipPorts, RPCClientOptions options, List<Filter> filters) {
         if (ipPorts == null || ipPorts.length() == 0) {
-            LOG.error("ipPorts format error, the right format is 10.1.1.1:8888;10.2.2.2:9999");
+            LOG.error("ipPorts format error, the right format is 10.1.1.1:8888,10.2.2.2:9999");
             throw new IllegalArgumentException("ipPorts format error");
         }
-        String[] ipPortSplits = ipPorts.split(";");
-        this.connectionPoolList = new ArrayList<>(ipPortSplits.length);
+
+        String[] ipPortSplits = ipPorts.split(",");
+        List<EndPoint> endPoints = new ArrayList<>(ipPortSplits.length);
         for (String ipPort : ipPortSplits) {
             String[] ipPortSplit = ipPort.split(":");
             if (ipPortSplit.length != 2) {
@@ -86,10 +122,10 @@ public class RPCClient {
             }
             String ip = ipPortSplit[0];
             int port = Integer.valueOf(ipPortSplit[1]);
-            ConnectionPool connectionPool = new ConnectionPool(this, ip, port);
-            connectionPoolList.add(connectionPool);
+            EndPoint endPoint = new EndPoint(ip, port);
+            endPoints.add(endPoint);
         }
-        this.filters = filters;
+        this.init(endPoints, options, filters);
     }
 
     public void asyncCall(String serviceMethodName,
@@ -154,7 +190,7 @@ public class RPCClient {
             this.doSend(fullRequest);
             // add request to RPCFuture and add timeout task
             final ScheduledExecutorService scheduledExecutor = RPCClient.getScheduledExecutor();
-            final long readTimeout = RPCClient.getRpcClientOption().getReadTimeoutMillis();
+            final long readTimeout = RPCClient.getRpcClientOptions().getReadTimeoutMillis();
             final String serviceName = fullRequest.getHeader().getServiceName();
             final String methodName = fullRequest.getHeader().getMethodName();
             ScheduledFuture scheduledFuture = scheduledExecutor.schedule(new Runnable() {
@@ -189,8 +225,8 @@ public class RPCClient {
                     if (channelFuture.isSuccess()) {
                         LOG.debug("Connection {} is established", channelFuture.channel());
                     } else {
-                        LOG.warn(String.format("Connection get failed on {} due to {}",
-                                channelFuture.cause().getMessage(), channelFuture.cause()));
+                        LOG.warn("Connection get failed on {} due to {}",
+                                channelFuture.cause().getMessage(), channelFuture.cause());
                     }
                 }
             });
@@ -208,25 +244,43 @@ public class RPCClient {
         }
     }
 
-    private synchronized static void init(RPCClientOption option) {
+    private void init(List<EndPoint> endPoints, RPCClientOptions options, List<Filter> filters) {
+        if (!isInit) {
+            RPCClient.initGlobal(options);
+        }
+        if (endPoints == null || endPoints.size() == 0) {
+            LOG.error("endPoints can not be null");
+            throw new IllegalArgumentException("endPoints null");
+        }
+        this.connectionPoolList = new ArrayList<>(endPoints.size());
+        for (EndPoint endPoint: endPoints) {
+            String ip = endPoint.getIp();
+            int port = endPoint.getPort();
+            ConnectionPool connectionPool = new ConnectionPool(this, ip, port);
+            connectionPoolList.add(connectionPool);
+        }
+        this.filters = filters;
+    }
+
+    private synchronized static void initGlobal(RPCClientOptions options) {
         if (!isInit) {
             pendingRPC = new ConcurrentHashMap<>();
             scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
 
-            if (option != null) {
-                RPCClient.rpcClientOption = option;
+            if (options != null) {
+                RPCClient.rpcClientOptions = options;
             } else {
-                RPCClient.rpcClientOption = new RPCClientOption();
+                RPCClient.rpcClientOptions = new RPCClientOptions();
             }
 
             bootstrap = new Bootstrap();
             bootstrap.channel(NioSocketChannel.class);
-            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, rpcClientOption.getConnectTimeoutMillis());
-            bootstrap.option(ChannelOption.SO_KEEPALIVE, rpcClientOption.isKeepAlive());
-            bootstrap.option(ChannelOption.SO_REUSEADDR, rpcClientOption.isReuseAddr());
-            bootstrap.option(ChannelOption.TCP_NODELAY, rpcClientOption.isTCPNoDelay());
-            bootstrap.option(ChannelOption.SO_RCVBUF, rpcClientOption.getReceiveBufferSize());
-            bootstrap.option(ChannelOption.SO_SNDBUF, rpcClientOption.getSendBufferSize());
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, rpcClientOptions.getConnectTimeoutMillis());
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, rpcClientOptions.isKeepAlive());
+            bootstrap.option(ChannelOption.SO_REUSEADDR, rpcClientOptions.isReuseAddr());
+            bootstrap.option(ChannelOption.TCP_NODELAY, rpcClientOptions.isTCPNoDelay());
+            bootstrap.option(ChannelOption.SO_RCVBUF, rpcClientOptions.getReceiveBufferSize());
+            bootstrap.option(ChannelOption.SO_SNDBUF, rpcClientOptions.getSendBufferSize());
 
             ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
                 @Override
@@ -298,8 +352,8 @@ public class RPCClient {
         return scheduledExecutor;
     }
 
-    public static RPCClientOption getRpcClientOption() {
-        return rpcClientOption;
+    public static RPCClientOptions getRpcClientOptions() {
+        return rpcClientOptions;
     }
 
     public List<Filter> getFilters() {

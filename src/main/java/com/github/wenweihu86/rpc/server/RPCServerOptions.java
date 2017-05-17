@@ -8,7 +8,7 @@ import java.nio.ByteOrder;
 /**
  * Created by wenweihu86 on 2017/4/24.
  */
-public class RPCServerOption {
+public class RPCServerOptions {
 
     // The keep alive
     private boolean keepAlive;

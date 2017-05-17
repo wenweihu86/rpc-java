@@ -16,7 +16,7 @@ import java.util.List;
 public class RPCClientTest {
 
     public static void main(String[] args) {
-        RPCClientOption clientOption = new RPCClientOption();
+        RPCClientOptions clientOption = new RPCClientOptions();
         clientOption.setWriteTimeoutMillis(200);
         clientOption.setReadTimeoutMillis(500);
 

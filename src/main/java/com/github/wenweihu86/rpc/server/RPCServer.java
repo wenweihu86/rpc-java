@@ -32,7 +32,7 @@ public class RPCServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCServer.class);
 
-    private static RPCServerOption rpcServerOption;
+    private static RPCServerOptions rpcServerOptions;
 
     // 端口
     private int port;
@@ -52,56 +52,56 @@ public class RPCServer {
         this(port, null, null);
     }
 
-    public RPCServer(int port, final RPCServerOption option) {
-        this(port, option, null);
+    public RPCServer(int port, final RPCServerOptions options) {
+        this(port, options, null);
     }
 
     public RPCServer(int port, List<Filter> filters) {
         this(port, null, filters);
     }
 
-    public RPCServer(int port, final RPCServerOption option, List<Filter> filters) {
+    public RPCServer(int port, final RPCServerOptions options, List<Filter> filters) {
         this.port = port;
         // use default conf otherwise use specified one
-        if (option != null) {
-            rpcServerOption = option;
+        if (options != null) {
+            rpcServerOptions = options;
         } else {
-            rpcServerOption = new RPCServerOption();
+            rpcServerOptions = new RPCServerOptions();
         }
         this.filters = filters;
 
         bootstrap = new ServerBootstrap();
         if (Epoll.isAvailable()) {
-            bossGroup = new EpollEventLoopGroup(rpcServerOption.getAcceptorThreadNum());
-            workerGroup = new EpollEventLoopGroup(rpcServerOption.getIOThreadNum());
+            bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum());
+            workerGroup = new EpollEventLoopGroup(rpcServerOptions.getIOThreadNum());
             ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
             ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(EpollServerSocketChannel.class);
         } else {
-            bossGroup = new NioEventLoopGroup(rpcServerOption.getAcceptorThreadNum());
-            workerGroup = new NioEventLoopGroup(rpcServerOption.getIOThreadNum());
+            bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum());
+            workerGroup = new NioEventLoopGroup(rpcServerOptions.getIOThreadNum());
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(NioServerSocketChannel.class);
         }
 
-        bootstrap.option(ChannelOption.SO_BACKLOG, rpcServerOption.getBacklog());
-        bootstrap.childOption(ChannelOption.SO_KEEPALIVE, rpcServerOption.isKeepAlive());
-        bootstrap.childOption(ChannelOption.TCP_NODELAY, rpcServerOption.isTCPNoDelay());
+        bootstrap.option(ChannelOption.SO_BACKLOG, rpcServerOptions.getBacklog());
+        bootstrap.childOption(ChannelOption.SO_KEEPALIVE, rpcServerOptions.isKeepAlive());
+        bootstrap.childOption(ChannelOption.TCP_NODELAY, rpcServerOptions.isTCPNoDelay());
         bootstrap.childOption(ChannelOption.SO_REUSEADDR, true);
         bootstrap.childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
-        bootstrap.childOption(ChannelOption.SO_LINGER, rpcServerOption.getSoLinger());
-        bootstrap.childOption(ChannelOption.SO_SNDBUF, rpcServerOption.getSendBufferSize());
-        bootstrap.childOption(ChannelOption.SO_RCVBUF, rpcServerOption.getReceiveBufferSize());
+        bootstrap.childOption(ChannelOption.SO_LINGER, rpcServerOptions.getSoLinger());
+        bootstrap.childOption(ChannelOption.SO_SNDBUF, rpcServerOptions.getSendBufferSize());
+        bootstrap.childOption(ChannelOption.SO_RCVBUF, rpcServerOptions.getReceiveBufferSize());
 
         ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline().addLast(
                         "idleStateAwareHandler", new IdleStateHandler(
-                                rpcServerOption.getReaderIdleTime(),
-                                rpcServerOption.getWriterIdleTime(),
-                                rpcServerOption.getKeepAliveTime()));
+                                rpcServerOptions.getReaderIdleTime(),
+                                rpcServerOptions.getWriterIdleTime(),
+                                rpcServerOptions.getKeepAliveTime()));
                 ch.pipeline().addLast("idle", new RPCServerChannelIdleHandler());
                 ch.pipeline().addLast("decoder", new RPCDecoder(true));
                 ch.pipeline().addLast("handler", new RPCServerHandler(RPCServer.this));
@@ -156,12 +156,12 @@ public class RPCServer {
         return filters;
     }
 
-    public static RPCServerOption getRpcServerOption() {
-        return rpcServerOption;
+    public static RPCServerOptions getRpcServerOptions() {
+        return rpcServerOptions;
     }
 
-    public static void setRpcServerOption(RPCServerOption rpcServerOption) {
-        RPCServer.rpcServerOption = rpcServerOption;
+    public static void setRpcServerOptions(RPCServerOptions rpcServerOptions) {
+        RPCServer.rpcServerOptions = rpcServerOptions;
     }
 
 }
