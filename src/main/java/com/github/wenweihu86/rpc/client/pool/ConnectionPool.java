@@ -18,7 +18,7 @@ public class ConnectionPool {
     private GenericObjectPool<Connection> pool;
 
     public ConnectionPool(RPCClient rpcClient, String host, int port) {
-        RPCClientOptions clientOptions = RPCClient.getRpcClientOptions();
+        RPCClientOptions clientOptions = rpcClient.getRpcClientOptions();
         GenericObjectPoolConfig config = new GenericObjectPoolConfig();
         config.setMaxIdle(clientOptions.getMaxIdleSize());
         config.setMinIdle(clientOptions.getMinIdleSize());

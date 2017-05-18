@@ -56,6 +56,7 @@ public class WorkHandler {
                 filterChain.doFilter(fullRequest, fullResponse);
             } catch (Exception ex) {
                 LOG.warn("server run failed, exception={}", ex.getMessage());
+                ex.printStackTrace();
                 RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
                         .setLogId(fullRequest.getHeader().getLogId())
                         .setResCode(RPCHeader.ResCode.RES_FAIL)

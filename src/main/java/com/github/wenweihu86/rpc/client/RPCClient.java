@@ -47,11 +47,10 @@ public class RPCClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCClient.class);
 
-    private static volatile boolean isInit = false;
-    private static RPCClientOptions rpcClientOptions;
-    private static Bootstrap bootstrap;
-    private static Map<String, RPCFuture> pendingRPC;
-    private static ScheduledExecutorService scheduledExecutor;
+    private RPCClientOptions rpcClientOptions;
+    private Bootstrap bootstrap;
+    private Map<String, RPCFuture> pendingRPC;
+    private ScheduledExecutorService scheduledExecutor;
 
     private List<ConnectionPool> connectionPoolList;
     private List<Filter> filters;
@@ -189,14 +188,14 @@ public class RPCClient {
         try {
             this.doSend(fullRequest);
             // add request to RPCFuture and add timeout task
-            final ScheduledExecutorService scheduledExecutor = RPCClient.getScheduledExecutor();
-            final long readTimeout = RPCClient.getRpcClientOptions().getReadTimeoutMillis();
+            final ScheduledExecutorService scheduledExecutor = getScheduledExecutor();
+            final long readTimeout = getRpcClientOptions().getReadTimeoutMillis();
             final String serviceName = fullRequest.getHeader().getServiceName();
             final String methodName = fullRequest.getHeader().getMethodName();
             ScheduledFuture scheduledFuture = scheduledExecutor.schedule(new Runnable() {
                 @Override
                 public void run() {
-                    RPCFuture rpcFuture = RPCClient.removeRPCFuture(logId);
+                    RPCFuture rpcFuture = removeRPCFuture(logId);
                     if (rpcFuture != null) {
                         LOG.debug("request timeout, logId={}, service={}, method={}",
                                 logId, serviceName, methodName);
@@ -208,10 +207,10 @@ public class RPCClient {
             }, readTimeout, TimeUnit.MILLISECONDS);
 
             RPCFuture future = new RPCFuture(scheduledFuture, fullRequest, callback);
-            RPCClient.addRPCFuture(logId, future);
+            addRPCFuture(logId, future);
             return future;
         } catch (RuntimeException ex) {
-            RPCClient.removeRPCFuture(logId);
+            removeRPCFuture(logId);
             return null;
         }
     }
@@ -245,9 +244,34 @@ public class RPCClient {
     }
 
     private void init(List<EndPoint> endPoints, RPCClientOptions options, List<Filter> filters) {
-        if (!isInit) {
-            RPCClient.initGlobal(options);
+        pendingRPC = new ConcurrentHashMap<>();
+        scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+
+        if (options != null) {
+            rpcClientOptions = options;
+        } else {
+            rpcClientOptions = new RPCClientOptions();
         }
+
+        bootstrap = new Bootstrap();
+        bootstrap.channel(NioSocketChannel.class);
+        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, rpcClientOptions.getConnectTimeoutMillis());
+        bootstrap.option(ChannelOption.SO_KEEPALIVE, rpcClientOptions.isKeepAlive());
+        bootstrap.option(ChannelOption.SO_REUSEADDR, rpcClientOptions.isReuseAddr());
+        bootstrap.option(ChannelOption.TCP_NODELAY, rpcClientOptions.isTCPNoDelay());
+        bootstrap.option(ChannelOption.SO_RCVBUF, rpcClientOptions.getReceiveBufferSize());
+        bootstrap.option(ChannelOption.SO_SNDBUF, rpcClientOptions.getSendBufferSize());
+
+        ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
+            @Override
+            protected void initChannel(SocketChannel ch) throws Exception {
+                ch.pipeline().addLast(new RPCEncoder<RPCHeader.RequestHeader>());
+                ch.pipeline().addLast(new RPCDecoder(false));
+                ch.pipeline().addLast(new RPCClientHandler(RPCClient.this));
+            }
+        };
+        bootstrap.group(new NioEventLoopGroup()).handler(initializer);
+
         if (endPoints == null || endPoints.size() == 0) {
             LOG.error("endPoints can not be null");
             throw new IllegalArgumentException("endPoints null");
@@ -262,37 +286,8 @@ public class RPCClient {
         this.filters = filters;
     }
 
-    private synchronized static void initGlobal(RPCClientOptions options) {
-        if (!isInit) {
-            pendingRPC = new ConcurrentHashMap<>();
-            scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
+    private void initGlobal(RPCClientOptions options) {
 
-            if (options != null) {
-                RPCClient.rpcClientOptions = options;
-            } else {
-                RPCClient.rpcClientOptions = new RPCClientOptions();
-            }
-
-            bootstrap = new Bootstrap();
-            bootstrap.channel(NioSocketChannel.class);
-            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, rpcClientOptions.getConnectTimeoutMillis());
-            bootstrap.option(ChannelOption.SO_KEEPALIVE, rpcClientOptions.isKeepAlive());
-            bootstrap.option(ChannelOption.SO_REUSEADDR, rpcClientOptions.isReuseAddr());
-            bootstrap.option(ChannelOption.TCP_NODELAY, rpcClientOptions.isTCPNoDelay());
-            bootstrap.option(ChannelOption.SO_RCVBUF, rpcClientOptions.getReceiveBufferSize());
-            bootstrap.option(ChannelOption.SO_SNDBUF, rpcClientOptions.getSendBufferSize());
-
-            ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
-                @Override
-                protected void initChannel(SocketChannel ch) throws Exception {
-                    ch.pipeline().addLast(new RPCEncoder<RPCHeader.RequestHeader>());
-                    ch.pipeline().addLast(new RPCDecoder(false));
-                    ch.pipeline().addLast(new RPCClientHandler());
-                }
-            };
-            bootstrap.group(new NioEventLoopGroup()).handler(initializer);
-            isInit = true;
-        }
     }
 
     private void doSend(RPCMessage<RPCHeader.RequestHeader> fullRequest) {
@@ -336,23 +331,23 @@ public class RPCClient {
         return randIndex;
     }
 
-    public static void addRPCFuture(String logId, RPCFuture future) {
+    public void addRPCFuture(String logId, RPCFuture future) {
         pendingRPC.put(logId, future);
     }
 
-    public static RPCFuture getRPCFuture(String logId) {
+    public RPCFuture getRPCFuture(String logId) {
         return pendingRPC.get(logId);
     }
 
-    public static RPCFuture removeRPCFuture(String logId) {
+    public RPCFuture removeRPCFuture(String logId) {
         return pendingRPC.remove(logId);
     }
 
-    public static ScheduledExecutorService getScheduledExecutor() {
+    public ScheduledExecutorService getScheduledExecutor() {
         return scheduledExecutor;
     }
 
-    public static RPCClientOptions getRpcClientOptions() {
+    public RPCClientOptions getRpcClientOptions() {
         return rpcClientOptions;
     }
 

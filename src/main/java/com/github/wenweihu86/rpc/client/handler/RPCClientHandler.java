@@ -17,16 +17,22 @@ public class RPCClientHandler extends SimpleChannelInboundHandler<RPCMessage<RPC
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCClientHandler.class);
 
+    private RPCClient rpcClient;
+
+    public RPCClientHandler(RPCClient rpcClient) {
+        this.rpcClient = rpcClient;
+    }
+
     @Override
     public void channelRead0(ChannelHandlerContext ctx,
                              RPCMessage<RPCHeader.ResponseHeader> fullResponse) throws Exception {
         String logId = fullResponse.getHeader().getLogId();
-        RPCFuture future = RPCClient.getRPCFuture(logId);
+        RPCFuture future = rpcClient.getRPCFuture(logId);
         if (future == null) {
             LOG.debug("receive msg from server but no request found, logId={}", logId);
             return;
         }
-        RPCClient.removeRPCFuture(logId);
+        rpcClient.removeRPCFuture(logId);
 
         if (fullResponse.getHeader().getResCode() == RPCHeader.ResCode.RES_SUCCESS) {
             Method decodeMethod = future.getResponseClass().getMethod("parseFrom", byte[].class);
