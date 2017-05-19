@@ -32,7 +32,7 @@ message ResponseHeader {
 <dependency>
     <groupId>com.github.wenweihu86.rpc</groupId>
     <artifactId>rpc-java</artifactId>
-    <version>1.0.0</version>
+    <version>1.2.0</version>
 </dependency>
 ```
 
