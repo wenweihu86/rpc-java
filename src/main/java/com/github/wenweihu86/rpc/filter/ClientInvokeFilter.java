@@ -6,6 +6,7 @@ import com.github.wenweihu86.rpc.codec.RPCHeader;
 import com.github.wenweihu86.rpc.filter.chain.FilterChain;
 import com.github.wenweihu86.rpc.codec.RPCMessage;
 
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -25,8 +26,8 @@ public class ClientInvokeFilter extends AbstractClientFilter {
                          RPCMessage<RPCHeader.ResponseHeader> fullResponse,
                          FilterChain chain) {
         try {
-            RPCFuture future = rpcClient.sendRequest(
-                    fullRequest, null);
+            Future<RPCMessage<RPCHeader.ResponseHeader>> future
+                    = rpcClient.sendRequest(fullRequest, null);
 
             if (future == null) {
                 RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
@@ -40,6 +41,8 @@ public class ClientInvokeFilter extends AbstractClientFilter {
                     rpcClient.getRpcClientOptions().getReadTimeoutMillis(),
                     TimeUnit.MILLISECONDS);
             fullResponse.copyFrom(fullResponse2);
+        } catch (Exception ex) {
+            ex.printStackTrace();
         } finally {
             chain.doFilter(fullRequest, fullResponse);
         }

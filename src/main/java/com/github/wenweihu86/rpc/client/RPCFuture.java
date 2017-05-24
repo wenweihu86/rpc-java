@@ -8,11 +8,12 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
-public class RPCFuture<T> {
+public class RPCFuture<T> implements Future<RPCMessage<RPCHeader.ResponseHeader>> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCFuture.class);
 
@@ -23,6 +24,7 @@ public class RPCFuture<T> {
 
     private RPCMessage<RPCHeader.ResponseHeader> fullResponse;
     private Throwable error;
+    private boolean isDone;
 
     public RPCFuture(ScheduledFuture scheduledFuture,
                      RPCMessage<RPCHeader.RequestHeader> fullRequest,
@@ -49,6 +51,7 @@ public class RPCFuture<T> {
         if (callback != null) {
             callback.success((T) fullResponse.getBodyMessage());
         }
+        isDone = true;
     }
 
     public void fail(Throwable error) {
@@ -58,6 +61,7 @@ public class RPCFuture<T> {
         if (callback != null) {
             callback.fail(error);
         }
+        isDone = true;
     }
 
     public void timeout() {
@@ -66,8 +70,25 @@ public class RPCFuture<T> {
         if (callback != null) {
             callback.fail(new RuntimeException("timeout"));
         }
+        isDone = true;
     }
 
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+        return false;
+    }
+
+    @Override
+    public boolean isCancelled() {
+        return false;
+    }
+
+    @Override
+    public boolean isDone() {
+        return isDone;
+    }
+
+    @Override
     public RPCMessage<RPCHeader.ResponseHeader> get() throws InterruptedException {
         latch.await();
         if (error != null) {
@@ -83,6 +104,7 @@ public class RPCFuture<T> {
         return fullResponse;
     }
 
+    @Override
     public RPCMessage<RPCHeader.ResponseHeader> get(long timeout, TimeUnit unit) {
         RPCHeader.RequestHeader requestHeader = fullRequest.getHeader();
         try {

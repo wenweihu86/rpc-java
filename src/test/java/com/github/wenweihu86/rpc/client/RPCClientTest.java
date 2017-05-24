@@ -1,6 +1,8 @@
 package com.github.wenweihu86.rpc.client;
 
 import com.github.wenweihu86.rpc.api.Sample;
+import com.github.wenweihu86.rpc.codec.RPCHeader;
+import com.github.wenweihu86.rpc.codec.RPCMessage;
 import com.github.wenweihu86.rpc.filter.Filter;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
@@ -9,10 +11,12 @@ import com.github.wenweihu86.rpc.filter.ClientCustomParamFilter;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * Created by wenweihu86 on 2017/4/26.
  */
+@SuppressWarnings("unchecked")
 public class RPCClientTest {
 
     public static void main(String[] args) {
@@ -69,7 +73,14 @@ public class RPCClientTest {
                 System.out.printf("async call SampleService.sampleRPC failed, %s\n", e.getMessage());
             }
         };
-        rpcClient.asyncCall("SampleService.sampleRPC", request, callback);
+        Future future = rpcClient.asyncCall("SampleService.sampleRPC", request, callback);
+        try {
+            future.get();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        rpcClient.stop();
     }
 
 }

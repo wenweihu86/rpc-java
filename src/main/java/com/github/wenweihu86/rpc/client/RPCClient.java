@@ -29,12 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.Set;
 import java.util.HashSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import com.github.wenweihu86.rpc.codec.RPCDecoder;
 import com.github.wenweihu86.rpc.codec.RPCEncoder;
@@ -127,13 +122,14 @@ public class RPCClient {
         this.init(endPoints, options, filters);
     }
 
-    public void asyncCall(String serviceMethodName,
-                          Object request,
-                          RPCCallback callback) {
+    public <T> Future<RPCMessage<RPCHeader.ResponseHeader>> asyncCall(
+            String serviceMethodName,
+            Object request,
+            RPCCallback<T> callback) {
         String[] splitArray = serviceMethodName.split("\\.");
         if (splitArray.length != 2) {
             LOG.error("serviceMethodName={} is not valid", serviceMethodName);
-            return;
+            return null;
         }
         String serviceName = splitArray[0];
         String methodName = splitArray[1];
@@ -146,7 +142,7 @@ public class RPCClient {
         final String logId = UUID.randomUUID().toString();
         RPCMessage<RPCHeader.RequestHeader> fullRequest = this.buildFullRequest(
                 logId, serviceName, methodName, request, responseBodyClass);
-        this.sendRequest(fullRequest, callback);
+        return this.sendRequest(fullRequest, callback);
     }
 
     public RPCMessage<RPCHeader.RequestHeader> buildFullRequest(
@@ -182,8 +178,9 @@ public class RPCClient {
         return fullRequest;
     }
 
-    public <T> RPCFuture sendRequest(final RPCMessage<RPCHeader.RequestHeader> fullRequest,
-                                     RPCCallback<T> callback) {
+    public <T> Future<RPCMessage<RPCHeader.ResponseHeader>> sendRequest(
+            final RPCMessage<RPCHeader.RequestHeader> fullRequest,
+            RPCCallback<T> callback) {
         final String logId = fullRequest.getHeader().getLogId();
         try {
             this.doSend(fullRequest);
@@ -243,6 +240,20 @@ public class RPCClient {
         }
     }
 
+    public void stop() {
+        if (bootstrap.config().group() != null) {
+            bootstrap.config().group().shutdownGracefully();
+        }
+        if (connectionPoolList != null) {
+            for (ConnectionPool connectionPool : connectionPoolList) {
+                connectionPool.stop();
+            }
+        }
+        if (scheduledExecutor != null) {
+            scheduledExecutor.shutdown();
+        }
+    }
+
     private void init(List<EndPoint> endPoints, RPCClientOptions options, List<Filter> filters) {
         pendingRPC = new ConcurrentHashMap<>();
         scheduledExecutor = Executors.newSingleThreadScheduledExecutor();
@@ -286,15 +297,11 @@ public class RPCClient {
         this.filters = filters;
     }
 
-    private void initGlobal(RPCClientOptions options) {
-
-    }
-
     private void doSend(RPCMessage<RPCHeader.RequestHeader> fullRequest) {
         int maxTryNum = 3;
         int currentTry = 0;
         Set<Integer> excludedSet = new HashSet<>(maxTryNum);
-        while (currentTry < maxTryNum) {
+        while (currentTry++ < maxTryNum) {
             int index = this.selectConnectionIndex(excludedSet);
             excludedSet.add(index);
             ConnectionPool connectionPool = this.connectionPoolList.get(index);
@@ -302,21 +309,19 @@ public class RPCClient {
             if (connection == null
                     || !connection.getChannel().isOpen()
                     || !connection.getChannel().isActive()) {
-                if (currentTry < maxTryNum - 1) {
-                    currentTry++;
-                    connectionPool.returnConnection(connection);
-                    continue;
-                } else {
-                    connectionPool.returnConnection(connection);
+                connectionPool.returnConnection(connection);
+                if (currentTry >= maxTryNum) {
                     throw new RuntimeException("connect failed");
+                } else {
+                    continue;
                 }
+            } else {
+                Channel channel = connection.getChannel();
+                LOG.debug("channel isActive={}", channel.isActive());
+                channel.writeAndFlush(fullRequest);
+                connectionPool.returnConnection(connection);
+                break;
             }
-            Channel channel = connection.getChannel();
-            LOG.debug("channel isActive={}", channel.isActive());
-            connection.setChannel(channel);
-            channel.writeAndFlush(fullRequest);
-            connectionPool.returnConnection(connection);
-            break;
         }
     }
 
