@@ -37,7 +37,7 @@ public class RPCClientHandler extends SimpleChannelInboundHandler<RPCMessage<RPC
         if (fullResponse.getHeader().getResCode() == RPCHeader.ResCode.RES_SUCCESS) {
             Method decodeMethod = future.getResponseClass().getMethod("parseFrom", byte[].class);
             GeneratedMessageV3 responseBody = (GeneratedMessageV3) decodeMethod.invoke(
-                    future.getResponseClass(), fullResponse.getBody());
+                    null, fullResponse.getBody());
             fullResponse.setBodyMessage(responseBody);
             future.success(fullResponse);
         } else {

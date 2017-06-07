@@ -37,7 +37,7 @@ public class ServerInvokeFilter implements Filter {
             try {
                 Method decodeMethod = requestClass.getMethod("parseFrom", byte[].class);
                 GeneratedMessageV3 requestBodyMessage = (GeneratedMessageV3) decodeMethod.invoke(
-                        requestClass, fullRequest.getBody());
+                        null, fullRequest.getBody());
                 LOG.debug("serviceName={} methodName={}", serviceName, methodName);
                 GeneratedMessageV3 responseBodyMessage =
                         (GeneratedMessageV3) serviceInfo.getMethod().invoke(

@@ -18,6 +18,9 @@ public class RPCClientOptions {
 
     private int writeTimeoutMillis = 100;
 
+    // 最大重试次数，默认是2，即最多请求3次
+    private int maxTryTimes = 2;
+
     // The keep alive
     private boolean keepAlive = true;
 
@@ -123,6 +126,14 @@ public class RPCClientOptions {
 
     public void setWriteTimeoutMillis(int writeTimeoutMillis) {
         this.writeTimeoutMillis = writeTimeoutMillis;
+    }
+
+    public int getMaxTryTimes() {
+        return maxTryTimes;
+    }
+
+    public void setMaxTryTimes(int maxTryTimes) {
+        this.maxTryTimes = maxTryTimes;
     }
 
     public boolean isKeepAlive() {

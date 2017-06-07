@@ -26,21 +26,28 @@ public class ClientInvokeFilter extends AbstractClientFilter {
                          RPCMessage<RPCHeader.ResponseHeader> fullResponse,
                          FilterChain chain) {
         try {
-            Future<RPCMessage<RPCHeader.ResponseHeader>> future
-                    = rpcClient.sendRequest(fullRequest, null);
-
-            if (future == null) {
-                RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
-                        .setLogId(fullRequest.getHeader().getLogId())
-                        .setResCode(RPCHeader.ResCode.RES_FAIL)
-                        .setResMsg("send request failed").build();
-                fullResponse.setHeader(responseHeader);
-                return;
-            }
-            RPCMessage<RPCHeader.ResponseHeader> fullResponse2 = future.get(
-                    rpcClient.getRpcClientOptions().getReadTimeoutMillis(),
-                    TimeUnit.MILLISECONDS);
-            fullResponse.copyFrom(fullResponse2);
+            int currentTryTimes = 0;
+            do {
+                Future<RPCMessage<RPCHeader.ResponseHeader>> future
+                        = rpcClient.sendRequest(fullRequest, null);
+                if (future == null) {
+                    RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
+                            .setLogId(fullRequest.getHeader().getLogId())
+                            .setResCode(RPCHeader.ResCode.RES_FAIL)
+                            .setResMsg("send request failed").build();
+                    fullResponse.setHeader(responseHeader);
+                    continue;
+                }
+                RPCMessage<RPCHeader.ResponseHeader> fullResponse2 = future.get(
+                        rpcClient.getRpcClientOptions().getReadTimeoutMillis(),
+                        TimeUnit.MILLISECONDS);
+                fullResponse.copyFrom(fullResponse2);
+                if (fullResponse2 == null
+                        || fullResponse2.getHeader().getResCode()
+                        != RPCHeader.ResCode.RES_SUCCESS) {
+                    continue;
+                }
+            } while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes());
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {

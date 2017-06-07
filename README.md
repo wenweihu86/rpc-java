@@ -152,6 +152,3 @@ public class RPCClientTest {
 
 }
 ```
-
-# 性能
-QPS可达50000+

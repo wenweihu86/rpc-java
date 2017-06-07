@@ -142,7 +142,17 @@ public class RPCClient {
         final String logId = UUID.randomUUID().toString();
         RPCMessage<RPCHeader.RequestHeader> fullRequest = this.buildFullRequest(
                 logId, serviceName, methodName, request, responseBodyClass);
-        return this.sendRequest(fullRequest, callback);
+
+        // 异步请求只在发送请求时重试，在callback中没有做重试。
+        Future<RPCMessage<RPCHeader.ResponseHeader>> future = null;
+        int currentRetryTimes = 0;
+        do {
+            future = this.sendRequest(fullRequest, callback);
+            if (future != null) {
+                break;
+            }
+        } while (currentRetryTimes++ < rpcClientOptions.getMaxTryTimes());
+        return future;
     }
 
     public RPCMessage<RPCHeader.RequestHeader> buildFullRequest(
