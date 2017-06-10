@@ -47,6 +47,7 @@ public class ClientInvokeFilter extends AbstractClientFilter {
                         != RPCHeader.ResCode.RES_SUCCESS) {
                     continue;
                 }
+                break;
             } while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes());
         } catch (Exception ex) {
             ex.printStackTrace();

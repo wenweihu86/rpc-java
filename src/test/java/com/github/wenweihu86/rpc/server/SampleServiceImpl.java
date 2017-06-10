@@ -13,6 +13,9 @@ public class SampleServiceImpl implements SampleService {
         String c = request.getB() + request.getA();
         Sample.SampleResponse response = Sample.SampleResponse.newBuilder()
                 .setC(c).build();
+        if (response != null) {
+            System.out.println(response.getC());
+        }
         return response;
     }
 }
