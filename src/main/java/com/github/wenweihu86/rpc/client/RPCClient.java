@@ -47,7 +47,8 @@ public class RPCClient {
     private Map<String, RPCFuture> pendingRPC;
     private ScheduledExecutorService scheduledExecutor;
 
-    private List<ConnectionPool> connectionPoolList;
+    private CopyOnWriteArrayList<EndPoint> endPointList;
+    private ConcurrentMap<EndPoint, ConnectionPool> connectionPoolMap;
     private List<Filter> filters;
 
     // first group constructor
@@ -101,25 +102,40 @@ public class RPCClient {
     }
 
     public RPCClient(String ipPorts, RPCClientOptions options, List<Filter> filters) {
-        if (ipPorts == null || ipPorts.length() == 0) {
-            LOG.error("ipPorts format error, the right format is 10.1.1.1:8888,10.2.2.2:9999");
-            throw new IllegalArgumentException("ipPorts format error");
-        }
-
-        String[] ipPortSplits = ipPorts.split(",");
-        List<EndPoint> endPoints = new ArrayList<>(ipPortSplits.length);
-        for (String ipPort : ipPortSplits) {
-            String[] ipPortSplit = ipPort.split(":");
-            if (ipPortSplit.length != 2) {
-                LOG.error("ipPorts format error, the right format is 10.1.1.1:8888;10.2.2.2:9999");
-                throw new IllegalArgumentException("ipPorts format error");
-            }
-            String ip = ipPortSplit[0];
-            int port = Integer.valueOf(ipPortSplit[1]);
-            EndPoint endPoint = new EndPoint(ip, port);
-            endPoints.add(endPoint);
-        }
+        List<EndPoint> endPoints = parseEndPoints(ipPorts);
         this.init(endPoints, options, filters);
+    }
+
+    public void addEndPoints(List<EndPoint> endPoints) {
+        for (EndPoint endPoint : endPoints) {
+            if (!connectionPoolMap.containsKey(endPoint)) {
+                endPointList.add(endPoint);
+                ConnectionPool connectionPool = new ConnectionPool(this, endPoint.getIp(), endPoint.getPort());
+                connectionPoolMap.putIfAbsent(endPoint, connectionPool);
+            }
+        }
+    }
+
+    public void addEndPoints(String ipPorts) {
+        List<EndPoint> endPoints = parseEndPoints(ipPorts);
+        addEndPoints(endPoints);
+    }
+
+    public void removeEndPoints(List<EndPoint> endPoints) {
+        for (EndPoint endPoint : endPoints) {
+            if (connectionPoolMap.containsKey(endPoint)) {
+                ConnectionPool oldConnectionPool = connectionPoolMap.remove(endPoint);
+                if (oldConnectionPool != null) {
+                    oldConnectionPool.stop();
+                }
+                endPointList.remove(endPoint);
+            }
+        }
+    }
+
+    public void removeEndPoints(String ipPorts) {
+        List<EndPoint> endPoints = parseEndPoints(ipPorts);
+        removeEndPoints(endPoints);
     }
 
     public <T> Future<RPCMessage<RPCHeader.ResponseHeader>> asyncCall(
@@ -231,7 +247,7 @@ public class RPCClient {
                     if (channelFuture.isSuccess()) {
                         LOG.debug("Connection {} is established", channelFuture.channel());
                     } else {
-                        LOG.warn("Connection get failed on {} due to {}",
+                        LOG.debug("Connection get failed on {} due to {}",
                                 channelFuture.cause().getMessage(), channelFuture.cause());
                     }
                 }
@@ -254,14 +270,36 @@ public class RPCClient {
         if (bootstrap.config().group() != null) {
             bootstrap.config().group().shutdownGracefully();
         }
-        if (connectionPoolList != null) {
-            for (ConnectionPool connectionPool : connectionPoolList) {
+        if (connectionPoolMap != null) {
+            for (ConnectionPool connectionPool : connectionPoolMap.values()) {
                 connectionPool.stop();
             }
         }
         if (scheduledExecutor != null) {
             scheduledExecutor.shutdown();
         }
+    }
+
+    private List<EndPoint> parseEndPoints(String ipPorts) {
+        if (ipPorts == null || ipPorts.length() == 0) {
+            LOG.error("ipPorts format error, the right format is 10.1.1.1:8888,10.2.2.2:9999");
+            throw new IllegalArgumentException("ipPorts format error");
+        }
+
+        String[] ipPortSplits = ipPorts.split(",");
+        List<EndPoint> endPoints = new ArrayList<>(ipPortSplits.length);
+        for (String ipPort : ipPortSplits) {
+            String[] ipPortSplit = ipPort.split(":");
+            if (ipPortSplit.length != 2) {
+                LOG.error("ipPorts format error, the right format is 10.1.1.1:8888;10.2.2.2:9999");
+                throw new IllegalArgumentException("ipPorts format error");
+            }
+            String ip = ipPortSplit[0];
+            int port = Integer.valueOf(ipPortSplit[1]);
+            EndPoint endPoint = new EndPoint(ip, port);
+            endPoints.add(endPoint);
+        }
+        return endPoints;
     }
 
     private void init(List<EndPoint> endPoints, RPCClientOptions options, List<Filter> filters) {
@@ -297,12 +335,13 @@ public class RPCClient {
             LOG.error("endPoints can not be null");
             throw new IllegalArgumentException("endPoints null");
         }
-        this.connectionPoolList = new ArrayList<>(endPoints.size());
+        this.endPointList = new CopyOnWriteArrayList<>(endPoints);
+        this.connectionPoolMap = new ConcurrentHashMap<>();
         for (EndPoint endPoint: endPoints) {
             String ip = endPoint.getIp();
             int port = endPoint.getPort();
             ConnectionPool connectionPool = new ConnectionPool(this, ip, port);
-            connectionPoolList.add(connectionPool);
+            connectionPoolMap.putIfAbsent(endPoint, connectionPool);
         }
         this.filters = filters;
     }
@@ -310,11 +349,11 @@ public class RPCClient {
     private void doSend(RPCMessage<RPCHeader.RequestHeader> fullRequest) {
         int maxTryNum = 3;
         int currentTry = 0;
-        Set<Integer> excludedSet = new HashSet<>(maxTryNum);
+        Set<EndPoint> excludedSet = new HashSet<>(maxTryNum);
         while (currentTry++ < maxTryNum) {
-            int index = this.selectConnectionIndex(excludedSet);
-            excludedSet.add(index);
-            ConnectionPool connectionPool = this.connectionPoolList.get(index);
+            EndPoint endPoint = this.selectEndPoint(excludedSet);
+            excludedSet.add(endPoint);
+            ConnectionPool connectionPool = connectionPoolMap.get(endPoint);
             Connection connection = connectionPool.getConnection();
             if (connection == null
                     || !connection.getChannel().isOpen()
@@ -335,15 +374,16 @@ public class RPCClient {
         }
     }
 
-    private int selectConnectionIndex(Set<Integer> excludedSet) {
-        int maxConnectNum = this.connectionPoolList.size();
+    private EndPoint selectEndPoint(Set<EndPoint> excludedSet) {
+        int maxEndPointNum = endPointList.size();
         int tryNum = 0;
-        int randIndex = ThreadLocalRandom.current().nextInt(0, maxConnectNum);
-        while (excludedSet.contains(randIndex) && tryNum < maxConnectNum) {
-            randIndex = ThreadLocalRandom.current().nextInt(0, maxConnectNum);
+        int maxTryNum = maxEndPointNum - excludedSet.size();
+        int randIndex = ThreadLocalRandom.current().nextInt(0, maxEndPointNum);
+        while (excludedSet.contains(randIndex) && tryNum < maxTryNum) {
+            randIndex = ThreadLocalRandom.current().nextInt(0, maxEndPointNum);
             tryNum++;
         }
-        return randIndex;
+        return endPointList.get(randIndex);
     }
 
     public void addRPCFuture(String logId, RPCFuture future) {

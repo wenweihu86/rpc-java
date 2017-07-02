@@ -39,7 +39,7 @@ public class ConnectionPool {
         try {
             connection = this.pool.borrowObject();
         } catch (Exception ex) {
-            LOG.warn("get connectin failed, msg={}", ex.getMessage());
+            LOG.debug("get connectin failed, msg={}", ex.getMessage());
         }
         return connection;
     }
@@ -48,7 +48,7 @@ public class ConnectionPool {
         try {
             pool.returnObject(connection);
         } catch (Exception ex) {
-            LOG.warn("return connection failed, msg={}", ex.getMessage());
+            LOG.debug("return connection failed, msg={}", ex.getMessage());
         }
     }
 

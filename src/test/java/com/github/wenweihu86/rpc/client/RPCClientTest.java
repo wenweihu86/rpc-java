@@ -75,7 +75,9 @@ public class RPCClientTest {
         };
         Future future = rpcClient.asyncCall("SampleService.sampleRPC", request, callback);
         try {
-            future.get();
+            if (future != null) {
+                future.get();
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
         }

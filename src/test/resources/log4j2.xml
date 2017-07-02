@@ -26,12 +26,12 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="com.wenweihu86.rpc" level="info" additivity="false">
+        <Logger name="com.wenweihu86.rpc" level="debug" additivity="false">
             <AppenderRef ref="Console" />
             <AppenderRef ref="RollingFile"/>
         </Logger>
 
-        <Root level="info" includeLocation="false">
+        <Root level="debug" includeLocation="false">
             <AppenderRef ref="Console" />
             <AppenderRef ref="RollingFile"/>
         </Root>
