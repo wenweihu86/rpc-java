@@ -1,9 +1,8 @@
 package com.github.wenweihu86.rpc.client;
 
-import com.github.wenweihu86.rpc.codec.RPCHeader;
-import com.github.wenweihu86.rpc.filter.chain.FilterChain;
-import com.github.wenweihu86.rpc.codec.RPCMessage;
-import com.github.wenweihu86.rpc.filter.chain.ClientFilterChain;
+import com.github.wenweihu86.rpc.protocol.ProtocolProcessor;
+import com.github.wenweihu86.rpc.protocol.standard.StandardProtocol;
+import com.github.wenweihu86.rpc.utils.IDGenerator;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -11,7 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.UUID;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -36,18 +36,42 @@ public class RPCProxy implements MethodInterceptor {
 
     public Object intercept(Object obj, Method method, Object[] args,
                             MethodProxy proxy) throws Throwable {
+        Long callId = IDGenerator.instance().getId();
+        ProtocolProcessor protocol = StandardProtocol.instance();
+        RPCCallback callback;
+        Class<?> responseClass;
+        Object fullRequest;
+        if (args.length > 1) {
+            callback = (RPCCallback) args[1];
+            Method syncMethod = method.getDeclaringClass().getMethod(
+                    method.getName(), method.getParameterTypes()[0]);
+            responseClass = syncMethod.getReturnType();
+            fullRequest = protocol.newRequest(callId, method, args[0], callback);
+        } else {
+            callback = null;
+            responseClass = method.getReturnType();
+            fullRequest = protocol.newRequest(callId, method, args[0], null);
+        }
 
-        final String logId = UUID.randomUUID().toString();
-        final String serviceName = method.getDeclaringClass().getSimpleName();
-        final String methodName = method.getName();
-        RPCMessage<RPCHeader.RequestHeader> fullRequest = rpcClient.buildFullRequest(
-                logId, serviceName, methodName, args[0], method.getReturnType());
-
-        RPCMessage<RPCHeader.ResponseHeader> fullResponse = new RPCMessage<>();
-        FilterChain filterChain = new ClientFilterChain(rpcClient.getFilters(), rpcClient);
-        filterChain.doFilter(fullRequest, fullResponse);
-
-        return fullResponse.getBodyMessage();
+        int currentTryTimes = 0;
+        Object response = null;
+        while (currentTryTimes++ < rpcClient.getRPCClientOptions().getMaxTryTimes()) {
+            Future future = rpcClient.sendRequest(callId, fullRequest, responseClass, callback);
+            if (future == null) {
+                continue;
+            }
+            if (callback != null) {
+                return future;
+            } else {
+                response = future.get(
+                        rpcClient.getRPCClientOptions().getReadTimeoutMillis(),
+                        TimeUnit.MILLISECONDS);
+                if (response != null) {
+                    break;
+                }
+            }
+        }
+        return response;
     }
 
 }

@@ -37,9 +37,11 @@ public class BenchmarkTest {
     public static class ThreadTask implements Runnable {
 
         private RPCClient rpcClient;
+        private SampleService sampleService;
 
         public ThreadTask(RPCClient rpcClient) {
             this.rpcClient = rpcClient;
+            this.sampleService = RPCProxy.getProxy(rpcClient, SampleService.class);
         }
 
         public void run() {
@@ -51,10 +53,7 @@ public class BenchmarkTest {
                 Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
                         .setA(1)
                         .setB("hello").build();
-
-                final JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();
                 // sync call
-                SampleService sampleService = RPCProxy.getProxy(rpcClient, SampleService.class);
                 Sample.SampleResponse response = sampleService.sampleRPC(request);
                 long endTime = System.currentTimeMillis();
                 if (response != null) {

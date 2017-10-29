@@ -19,6 +19,8 @@ public class ServiceInfo {
 
     private Class responseClass;
 
+    private Method parseFromForRequest;
+
     public String getServiceName() {
         return serviceName;
     }
@@ -65,5 +67,13 @@ public class ServiceInfo {
 
     public void setResponseClass(Class responseClass) {
         this.responseClass = responseClass;
+    }
+
+    public Method getParseFromForRequest() {
+        return parseFromForRequest;
+    }
+
+    public void setParseFromForRequest(Method parseFromForRequest) {
+        this.parseFromForRequest = parseFromForRequest;
     }
 }

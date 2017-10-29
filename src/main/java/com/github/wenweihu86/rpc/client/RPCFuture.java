@@ -1,61 +1,58 @@
 package com.github.wenweihu86.rpc.client;
 
-import com.github.wenweihu86.rpc.codec.RPCHeader;
-import com.github.wenweihu86.rpc.codec.RPCMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
-public class RPCFuture<T> implements Future<RPCMessage<RPCHeader.ResponseHeader>> {
+public class RPCFuture<T> implements Future<Object> {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCFuture.class);
 
     private CountDownLatch latch;
     private ScheduledFuture scheduledFuture;
-    private RPCMessage<RPCHeader.RequestHeader> fullRequest;
+    private Long callId;
+    private Object fullRequest;
+    private Class<T> responseClass;
     private RPCCallback<T> callback;
+    private RPCChannelGroup channelGroup;
 
-    private RPCMessage<RPCHeader.ResponseHeader> fullResponse;
+    private Object response;
     private Throwable error;
     private boolean isDone;
 
     public RPCFuture(ScheduledFuture scheduledFuture,
-                     RPCMessage<RPCHeader.RequestHeader> fullRequest,
-                     RPCCallback<T> callback) {
-        if (fullRequest.getResponseBodyClass() == null && callback == null) {
-            LOG.error("responseClass or callback must have one not null only");
-            return;
-        }
+                     Long callId,
+                     Object fullRequest,
+                     Class<T> responseClass,
+                     RPCCallback<T> callback,
+                     RPCChannelGroup channelGroup) {
+        this.callId = callId;
         this.fullRequest = fullRequest;
+        this.responseClass = responseClass;
         this.scheduledFuture = scheduledFuture;
         this.callback = callback;
-        if (this.fullRequest.getResponseBodyClass() == null) {
-            Type type = callback.getClass().getGenericInterfaces()[0];
-            Class clazz = (Class) ((ParameterizedType) type).getActualTypeArguments()[0];
-            this.fullRequest.setResponseBodyClass(clazz);
-        }
+        this.channelGroup = channelGroup;
         this.latch = new CountDownLatch(1);
     }
 
-    public void success(RPCMessage<RPCHeader.ResponseHeader> fullResponse) {
-        this.fullResponse = fullResponse;
+    public void success(Object response) {
+        this.response = response;
         scheduledFuture.cancel(true);
         latch.countDown();
         if (callback != null) {
-            callback.success((T) fullResponse.getBodyMessage());
+            callback.success((T) response);
         }
         isDone = true;
     }
 
     public void fail(Throwable error) {
         this.error = error;
+        channelGroup.incFailedNum();
         scheduledFuture.cancel(true);
         latch.countDown();
         if (callback != null) {
@@ -65,7 +62,8 @@ public class RPCFuture<T> implements Future<RPCMessage<RPCHeader.ResponseHeader>
     }
 
     public void timeout() {
-        this.fullResponse = null;
+        this.response = null;
+        channelGroup.incFailedNum();
         latch.countDown();
         if (callback != null) {
             callback.fail(new RuntimeException("timeout"));
@@ -89,62 +87,40 @@ public class RPCFuture<T> implements Future<RPCMessage<RPCHeader.ResponseHeader>
     }
 
     @Override
-    public RPCMessage<RPCHeader.ResponseHeader> get() throws InterruptedException {
+    public T get() throws InterruptedException {
         latch.await();
         if (error != null) {
             LOG.warn("error occurs due to {}", error.getMessage());
-            RPCHeader.RequestHeader requestHeader = fullRequest.getHeader();
-            fullResponse = newResponse(requestHeader.getLogId(),
-                    RPCHeader.ResCode.RES_FAIL, error.getMessage());
+            return null;
         }
-        if (fullResponse == null) {
-            fullResponse = newResponse(fullRequest.getHeader().getLogId(),
-                    RPCHeader.ResCode.RES_FAIL, "time out");
-        }
-        return fullResponse;
+        return (T) response;
     }
 
     @Override
-    public RPCMessage<RPCHeader.ResponseHeader> get(long timeout, TimeUnit unit) {
-        RPCHeader.RequestHeader requestHeader = fullRequest.getHeader();
+    public T get(long timeout, TimeUnit unit) {
         try {
             if (latch.await(timeout, unit)) {
                 if (error != null) {
                     LOG.warn("error occurrs due to {}", error.getMessage());
-                    fullResponse = newResponse(requestHeader.getLogId(),
-                            RPCHeader.ResCode.RES_FAIL, error.getMessage());
+                    return null;
                 }
             } else {
                 LOG.warn("sync call time out");
-                fullResponse = newResponse(requestHeader.getLogId(),
-                        RPCHeader.ResCode.RES_FAIL, "time out");
+                return null;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.warn("sync call is interrupted, {}", e);
-            fullResponse = newResponse(requestHeader.getLogId(),
-                    RPCHeader.ResCode.RES_FAIL, "time out");
+            return null;
         }
-        if (fullResponse == null) {
-            fullResponse = newResponse(requestHeader.getLogId(),
-                    RPCHeader.ResCode.RES_FAIL, "time out");
-        }
-        return fullResponse;
+        return (T) response;
     }
 
     public Class getResponseClass() {
-        return fullRequest.getResponseBodyClass();
+        return responseClass;
     }
 
-    private RPCMessage<RPCHeader.ResponseHeader> newResponse(
-            String logId, RPCHeader.ResCode resCode, String resMsg) {
-        RPCMessage<RPCHeader.ResponseHeader> fullResponse = new RPCMessage<>();
-        RPCHeader.ResponseHeader responseHeader = RPCHeader.ResponseHeader.newBuilder()
-                .setLogId(logId)
-                .setResCode(resCode)
-                .setResMsg(resMsg).build();
-        fullResponse.setHeader(responseHeader);
-        return fullResponse;
+    public RPCChannelGroup getChannelGroup() {
+        return channelGroup;
     }
-
 }

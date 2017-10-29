@@ -1,16 +1,11 @@
 package com.github.wenweihu86.rpc.client;
 
 import com.github.wenweihu86.rpc.api.Sample;
-import com.github.wenweihu86.rpc.codec.RPCHeader;
-import com.github.wenweihu86.rpc.codec.RPCMessage;
-import com.github.wenweihu86.rpc.filter.Filter;
+import com.github.wenweihu86.rpc.api.SampleServiceAsync;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import com.github.wenweihu86.rpc.api.SampleService;
-import com.github.wenweihu86.rpc.filter.ClientCustomParamFilter;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.Future;
 
 /**
@@ -29,10 +24,7 @@ public class RPCClientTest {
             ipPorts = args[0];
         }
 
-        List<Filter> filters = new ArrayList<>();
-        ClientCustomParamFilter customParamFilter = new ClientCustomParamFilter();
-        filters.add(customParamFilter);
-        RPCClient rpcClient = new RPCClient(ipPorts, clientOption, filters);
+        RPCClient rpcClient = new RPCClient(ipPorts, clientOption);
 
         // build request
         Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
@@ -73,7 +65,8 @@ public class RPCClientTest {
                 System.out.printf("async call SampleService.sampleRPC failed, %s\n", e.getMessage());
             }
         };
-        Future future = rpcClient.asyncCall("SampleService.sampleRPC", request, callback);
+        SampleServiceAsync asyncSampleService = RPCProxy.getProxy(rpcClient, SampleServiceAsync.class);
+        Future future = asyncSampleService.sampleRPC(request, callback);
         try {
             if (future != null) {
                 future.get();

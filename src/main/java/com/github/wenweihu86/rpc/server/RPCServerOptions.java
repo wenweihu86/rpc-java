@@ -3,8 +3,6 @@ package com.github.wenweihu86.rpc.server;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 
-import java.nio.ByteOrder;
-
 /**
  * Created by wenweihu86 on 2017/4/24.
  */
@@ -19,7 +17,7 @@ public class RPCServerOptions {
     private int soLinger = 5;
 
     // backlog
-    private int backlog = 100;
+    private int backlog = 1024;
 
     // receive buffer size
     private int receiveBufferSize = 1024 * 64;
@@ -136,11 +134,11 @@ public class RPCServerOptions {
         this.acceptorThreadNum = acceptorThreadNum;
     }
 
-    public int getIOThreadNum() {
+    public int getIoThreadNum() {
         return ioThreadNum;
     }
 
-    public void setIOThreadNum(int ioThreadNum) {
+    public void setIoThreadNum(int ioThreadNum) {
         this.ioThreadNum = ioThreadNum;
     }
 

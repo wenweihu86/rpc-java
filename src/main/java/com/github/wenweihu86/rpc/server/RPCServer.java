@@ -1,20 +1,17 @@
 package com.github.wenweihu86.rpc.server;
 
-import com.github.wenweihu86.rpc.codec.RPCDecoder;
-import com.github.wenweihu86.rpc.codec.RPCEncoder;
-import com.github.wenweihu86.rpc.filter.Filter;
+import com.github.wenweihu86.rpc.protocol.RPCReponseEncoder;
+import com.github.wenweihu86.rpc.protocol.RPCRequestDecoder;
 import com.github.wenweihu86.rpc.server.handler.RPCServerChannelIdleHandler;
-import com.github.wenweihu86.rpc.server.handler.WorkHandler;
-import com.github.wenweihu86.rpc.codec.RPCHeader;
 import com.github.wenweihu86.rpc.server.handler.RPCServerHandler;
+import com.github.wenweihu86.rpc.server.handler.WorkThreadPool;
+import com.github.wenweihu86.rpc.utils.CustomThreadFactory;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollServerSocketChannel;
+import io.netty.channel.epoll.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -23,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
-import java.util.List;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
@@ -32,57 +28,57 @@ public class RPCServer {
 
     private static final Logger LOG = LoggerFactory.getLogger(RPCServer.class);
 
-    private static RPCServerOptions rpcServerOptions;
+    private RPCServerOptions rpcServerOptions;
 
     // 端口
     private int port;
 
-    // netty的服务启动对象
+    // netty bootstrap
     private ServerBootstrap bootstrap;
 
-    // 接受客户端请求的线程
+    // netty acceptor thread pool
     private EventLoopGroup bossGroup;
 
-    // 处理业务逻辑的线程
+    // netty io thread pool
     private EventLoopGroup workerGroup;
 
-    private List<Filter> filters;
+    // business handler thread pool
+    private WorkThreadPool workThreadPool;
 
     public RPCServer(int port) {
-        this(port, null, null);
+        this(port, new RPCServerOptions());
     }
 
     public RPCServer(int port, final RPCServerOptions options) {
-        this(port, options, null);
-    }
-
-    public RPCServer(int port, List<Filter> filters) {
-        this(port, null, filters);
-    }
-
-    public RPCServer(int port, final RPCServerOptions options, List<Filter> filters) {
         this.port = port;
-        // use default conf otherwise use specified one
-        if (options != null) {
-            rpcServerOptions = options;
-        } else {
-            rpcServerOptions = new RPCServerOptions();
-        }
-        this.filters = filters;
+        this.rpcServerOptions = options;
+        this.workThreadPool = new WorkThreadPool(options.getWorkThreadNum());
 
         bootstrap = new ServerBootstrap();
         if (Epoll.isAvailable()) {
-            bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum());
-            workerGroup = new EpollEventLoopGroup(rpcServerOptions.getIOThreadNum());
+            bossGroup = new EpollEventLoopGroup(
+                    rpcServerOptions.getAcceptorThreadNum(),
+                    new CustomThreadFactory("server-acceptor-thread"));
+            workerGroup = new EpollEventLoopGroup(
+                    rpcServerOptions.getIoThreadNum(),
+                    new CustomThreadFactory("server-io-thread"));
             ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
             ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(EpollServerSocketChannel.class);
+            bootstrap.option(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
+            bootstrap.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
+            LOG.info("use epoll edge trigger mode");
         } else {
-            bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum());
-            workerGroup = new NioEventLoopGroup(rpcServerOptions.getIOThreadNum());
+            bossGroup = new NioEventLoopGroup(
+                    rpcServerOptions.getAcceptorThreadNum(),
+                    new CustomThreadFactory("server-acceptor-thread"));
+            workerGroup = new NioEventLoopGroup(
+                    rpcServerOptions.getIoThreadNum(),
+                    new CustomThreadFactory("server-io-thread"));
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(NioServerSocketChannel.class);
+            LOG.info("use normal mode");
         }
 
         bootstrap.option(ChannelOption.SO_BACKLOG, rpcServerOptions.getBacklog());
@@ -103,9 +99,9 @@ public class RPCServer {
                                 rpcServerOptions.getWriterIdleTime(),
                                 rpcServerOptions.getKeepAliveTime()));
                 ch.pipeline().addLast("idle", new RPCServerChannelIdleHandler());
-                ch.pipeline().addLast("decoder", new RPCDecoder(true));
+                ch.pipeline().addLast("decoder", new RPCRequestDecoder());
                 ch.pipeline().addLast("handler", new RPCServerHandler(RPCServer.this));
-                ch.pipeline().addLast("encoder", new RPCEncoder<RPCHeader.ResponseHeader>());
+                ch.pipeline().addLast("encoder", new RPCReponseEncoder());
             }
         };
         bootstrap.group(bossGroup, workerGroup).childHandler(initializer);
@@ -122,18 +118,23 @@ public class RPCServer {
         ServiceManager serviceManager = ServiceManager.getInstance();
         for (Method method : methods) {
             ServiceInfo serviceInfo = new ServiceInfo();
-            serviceInfo.setServiceName(clazz.getSimpleName());
-            serviceInfo.setMethodName(method.getName());
+            serviceInfo.setServiceName(clazz.getName().toLowerCase());
+            serviceInfo.setMethodName(method.getName().toLowerCase());
             serviceInfo.setService(service);
             serviceInfo.setMethod(method);
             serviceInfo.setRequestClass(method.getParameterTypes()[0]);
             serviceInfo.setResponseClass(method.getReturnType());
+            try {
+                Method parseFromMethod = serviceInfo.getRequestClass().getMethod("parseFrom", byte[].class);
+                serviceInfo.setParseFromForRequest(parseFromMethod);
+            } catch (Exception ex) {
+                throw new RuntimeException("getMethod failed, register failed");
+            }
             serviceManager.registerService(serviceInfo);
         }
     }
 
     public void start() {
-        WorkHandler.init();
         try {
             bootstrap.bind(port).sync();
         } catch (InterruptedException e) {
@@ -149,19 +150,18 @@ public class RPCServer {
         if (workerGroup != null) {
             workerGroup.shutdownGracefully();
         }
-        WorkHandler.getExecutor().shutdown();
+        workThreadPool.getExecutor().shutdown();
     }
 
-    public List<Filter> getFilters() {
-        return filters;
-    }
-
-    public static RPCServerOptions getRpcServerOptions() {
+    public RPCServerOptions getRpcServerOptions() {
         return rpcServerOptions;
     }
 
-    public static void setRpcServerOptions(RPCServerOptions rpcServerOptions) {
-        RPCServer.rpcServerOptions = rpcServerOptions;
+    public void setRpcServerOptions(RPCServerOptions rpcServerOptions) {
+        this.rpcServerOptions = rpcServerOptions;
     }
 
+    public WorkThreadPool getWorkThreadPool() {
+        return workThreadPool;
+    }
 }
