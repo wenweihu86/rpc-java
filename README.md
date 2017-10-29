@@ -13,14 +13,14 @@ Header格式如下：<br>
 message RequestHeader {
     string service_name = 1; // 服务名或接口名
     string method_name = 2; // 方法名
-    string log_id = 3; // 日志id
+    string call_id = 3; // 请求id
     CompressType compress_type = 4; // body消息压缩类型，0：不压缩，1：SNAPPY压缩，2：GZIP压缩
     map<string, string> custom_param = 5; // 用户自定义参数
 }
 
 // 响应Header
 message ResponseHeader {
-    string log_id = 1; // 请求的logId
+    string call_id = 1; // 请求id
     ResCode res_code = 2; // 返回码，0：成功，1：失败
     string res_msg = 3; // 返回失败时的错误消息
 }
@@ -32,7 +32,7 @@ message ResponseHeader {
 <dependency>
     <groupId>com.github.wenweihu86.rpc</groupId>
     <artifactId>rpc-java</artifactId>
-    <version>1.5.0</version>
+    <version>1.7.0</version>
 </dependency>
 ```
 
@@ -51,8 +51,14 @@ message SampleResponse {
 
 ### 定义java接口类
 ```java
+// 同步调用接口
 public interface SampleService {
     Sample.SampleResponse sampleRPC(Sample.SampleRequest request);
+}
+// 异步调用接口
+public interface SampleServiceAsync extends SampleService {
+    Future<Sample.SampleResponse> sampleRPC(Sample.SampleRequest request,
+                                       RPCCallback<Sample.SampleResponse> callback);
 }
 ```
 
@@ -79,12 +85,17 @@ public class RPCServerTest {
             port = Integer.valueOf(args[0]);
         }
 
-        List<Filter> filters = new ArrayList<>();
-        ServerCustomParamFilter filter = new ServerCustomParamFilter();
-        filters.add(filter);
-        RPCServer rpcServer = new RPCServer(port, filters);
+        RPCServer rpcServer = new RPCServer(port);
         rpcServer.registerService(new SampleServiceImpl());
         rpcServer.start();
+
+        // make server keep running
+        synchronized (RPCServerTest.class) {
+            try {
+                RPCServerTest.class.wait();
+            } catch (Throwable e) {
+            }
+        }
     }
 }
 ```
@@ -94,7 +105,7 @@ public class RPCServerTest {
 public class RPCClientTest {
 
     public static void main(String[] args) {
-        RPCClientOption clientOption = new RPCClientOption();
+        RPCClientOptions clientOption = new RPCClientOptions();
         clientOption.setWriteTimeoutMillis(200);
         clientOption.setReadTimeoutMillis(500);
 
@@ -103,10 +114,7 @@ public class RPCClientTest {
             ipPorts = args[0];
         }
 
-        List<Filter> filters = new ArrayList<>();
-        ClientCustomParamFilter customParamFilter = new ClientCustomParamFilter();
-        filters.add(customParamFilter);
-        RPCClient rpcClient = new RPCClient(ipPorts, clientOption, filters);
+        RPCClient rpcClient = new RPCClient(ipPorts, clientOption);
 
         // build request
         Sample.SampleRequest request = Sample.SampleRequest.newBuilder()
@@ -147,7 +155,17 @@ public class RPCClientTest {
                 System.out.printf("async call SampleService.sampleRPC failed, %s\n", e.getMessage());
             }
         };
-        rpcClient.asyncCall("SampleService.sampleRPC", request, callback);
+        SampleServiceAsync asyncSampleService = RPCProxy.getProxy(rpcClient, SampleServiceAsync.class);
+        Future future = asyncSampleService.sampleRPC(request, callback);
+        try {
+            if (future != null) {
+                future.get();
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+
+        rpcClient.stop();
     }
 
 }
