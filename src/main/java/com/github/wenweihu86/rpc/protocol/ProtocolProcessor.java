@@ -8,9 +8,6 @@ import io.netty.channel.ChannelHandlerContext;
 import java.lang.reflect.Method;
 import java.util.List;
 
-/**
- * Created by baidu on 2017/9/22.
- */
 public interface ProtocolProcessor {
 
     Object newRequest(Long callId, Method method, Object request, RPCCallback callback);
