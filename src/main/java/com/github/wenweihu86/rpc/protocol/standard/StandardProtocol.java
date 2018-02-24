@@ -4,12 +4,14 @@ import com.github.wenweihu86.rpc.client.RPCCallback;
 import com.github.wenweihu86.rpc.client.RPCClient;
 import com.github.wenweihu86.rpc.client.RPCFuture;
 import com.github.wenweihu86.rpc.protocol.ProtocolProcessor;
+import com.github.wenweihu86.rpc.protocol.RPCMeta;
 import com.github.wenweihu86.rpc.server.ServiceInfo;
 import com.github.wenweihu86.rpc.server.ServiceManager;
 import com.google.protobuf.MessageLite;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,13 +36,23 @@ public class StandardProtocol<T> implements ProtocolProcessor {
         RPCHeader.RequestHeader.Builder headerBuilder = RPCHeader.RequestHeader.newBuilder();
         headerBuilder.setCallId(callId);
 
-        String serviceName = method.getDeclaringClass().getName();
-        if (callback != null && serviceName.endsWith("Async")) {
-            serviceName = serviceName.substring(0, serviceName.length() - 5);
+        String serviceName;
+        RPCMeta rpcMeta = method.getAnnotation(RPCMeta.class);
+        if (rpcMeta != null && StringUtils.isNotBlank(rpcMeta.serviceName())) {
+            serviceName = rpcMeta.serviceName();
+        } else {
+            serviceName = method.getDeclaringClass().getName();
         }
-        headerBuilder.setServiceName(serviceName);
+        String methodName;
+        if (rpcMeta != null && StringUtils.isNotBlank(rpcMeta.methodName())) {
+            methodName = rpcMeta.methodName();
+        } else {
+            methodName = method.getName();
+        }
+        LOG.debug("serviceName={}, methodName={}", serviceName, methodName);
 
-        headerBuilder.setMethodName(method.getName());
+        headerBuilder.setServiceName(serviceName);
+        headerBuilder.setMethodName(methodName);
         fullRequest.setHeader(headerBuilder.build());
 
         if (!MessageLite.class.isAssignableFrom(request.getClass())) {
@@ -81,8 +93,8 @@ public class StandardProtocol<T> implements ProtocolProcessor {
                 .setResCode(RPCHeader.ResCode.RES_FAIL);
         RPCMessage<RPCHeader.ResponseHeader> fullResponse = new RPCMessage<RPCHeader.ResponseHeader>();
 
-        String serviceName = requestHeader.getServiceName().toLowerCase();
-        String methodName = requestHeader.getMethodName().toLowerCase();
+        String serviceName = requestHeader.getServiceName();
+        String methodName = requestHeader.getMethodName();
         ServiceManager serviceManager = ServiceManager.getInstance();
         ServiceInfo serviceInfo = serviceManager.getService(serviceName, methodName);
         if (serviceInfo == null) {

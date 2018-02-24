@@ -1,5 +1,6 @@
 package com.github.wenweihu86.rpc.server;
 
+import com.github.wenweihu86.rpc.protocol.RPCMeta;
 import com.github.wenweihu86.rpc.protocol.RPCReponseEncoder;
 import com.github.wenweihu86.rpc.protocol.RPCRequestDecoder;
 import com.github.wenweihu86.rpc.server.handler.RPCServerChannelIdleHandler;
@@ -16,6 +17,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,8 +120,23 @@ public class RPCServer {
         ServiceManager serviceManager = ServiceManager.getInstance();
         for (Method method : methods) {
             ServiceInfo serviceInfo = new ServiceInfo();
-            serviceInfo.setServiceName(clazz.getName().toLowerCase());
-            serviceInfo.setMethodName(method.getName().toLowerCase());
+
+            String serviceName;
+            RPCMeta rpcMeta = method.getAnnotation(RPCMeta.class);
+            if (rpcMeta != null && StringUtils.isNotBlank(rpcMeta.serviceName())) {
+                serviceName = rpcMeta.serviceName();
+            } else {
+                serviceName = method.getDeclaringClass().getName();
+            }
+            String methodName;
+            if (rpcMeta != null && StringUtils.isNotBlank(rpcMeta.methodName())) {
+                methodName = rpcMeta.methodName();
+            } else {
+                methodName = method.getName();
+            }
+
+            serviceInfo.setServiceName(serviceName);
+            serviceInfo.setMethodName(methodName);
             serviceInfo.setService(service);
             serviceInfo.setMethod(method);
             serviceInfo.setRequestClass(method.getParameterTypes()[0]);
@@ -131,6 +148,8 @@ public class RPCServer {
                 throw new RuntimeException("getMethod failed, register failed");
             }
             serviceManager.registerService(serviceInfo);
+            LOG.info("register service, serviceName={}, methodName={}",
+                    serviceInfo.getServiceName(), serviceInfo.getMethodName());
         }
     }
 

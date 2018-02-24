@@ -46,7 +46,7 @@ public class RPCProxy implements MethodInterceptor {
             Method syncMethod = method.getDeclaringClass().getMethod(
                     method.getName(), method.getParameterTypes()[0]);
             responseClass = syncMethod.getReturnType();
-            fullRequest = protocol.newRequest(callId, method, args[0], callback);
+            fullRequest = protocol.newRequest(callId, syncMethod, args[0], callback);
         } else {
             callback = null;
             responseClass = method.getReturnType();
