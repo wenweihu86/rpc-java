@@ -3,6 +3,7 @@ package com.github.wenweihu86.rpc.client;
 import com.github.wenweihu86.rpc.protocol.ProtocolProcessor;
 import com.github.wenweihu86.rpc.protocol.standard.StandardProtocol;
 import com.github.wenweihu86.rpc.utils.IDGenerator;
+import com.google.protobuf.MessageLite;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -36,6 +37,12 @@ public class RPCProxy implements MethodInterceptor {
 
     public Object intercept(Object obj, Method method, Object[] args,
                             MethodProxy proxy) throws Throwable {
+        if (method.getParameterTypes().length < 1
+                || !MessageLite.class.isAssignableFrom(method.getParameterTypes()[0])) {
+            LOG.debug("{} no need to be proxyed", method.getName());
+            return proxy.invokeSuper(obj, args);
+        }
+
         Long callId = IDGenerator.instance().getId();
         ProtocolProcessor protocol = StandardProtocol.instance();
         RPCCallback callback;
