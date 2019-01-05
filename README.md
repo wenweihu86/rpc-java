@@ -1,3 +1,5 @@
+# 该项目不再维护，有需求请使用[brpc-java](https://github.com/baidu/brpc-java)
+
 # 背景
 rpc-java是一个基于netty4和protobuf3的java rpc框架，
 主要使用场景是高并发server系统，如分布式消息队列、分布式存储系统等。
